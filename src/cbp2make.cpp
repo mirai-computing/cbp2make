@@ -124,12 +124,12 @@ void CProcessingMachine::CreateConfiguration(void)
  CPlatform pl; pl.Reset(CPlatform::OS_Unix);
  CToolChain tc("gcc");
  //
- PSC().InsertBooleanVariable("--version");
+ PSC().InsertFlagVariable("--version");
  PSC().InsertStringVariable("--config");
- PSC().InsertBooleanVariable("--local");
- PSC().InsertBooleanVariable("--global");
- PSC().InsertBooleanVariable("--add");
- PSC().InsertBooleanVariable("--remove");
+ PSC().InsertFlagVariable("--local");
+ PSC().InsertFlagVariable("--global");
+ PSC().InsertFlagVariable("--add");
+ PSC().InsertFlagVariable("--remove");
  PSC().InsertStringVariable("-set","default");
  PSC().InsertStringVariable("-name","");
  PSC().InsertStringVariable("-desc","");
@@ -159,17 +159,17 @@ void CProcessingMachine::CreateConfiguration(void)
  PSC().InsertStringVariable("-objext","o");
  PSC().InsertStringVariable("-lflat","no");
 
- PSC().InsertBooleanVariable("-unix");
- PSC().InsertBooleanVariable("-windows");
- PSC().InsertBooleanVariable("-mac");
- PSC().InsertBooleanVariable("--all-os");
- PSC().InsertBooleanVariable("--flat-objects");
- PSC().InsertBooleanVariable("--flat-objpath");
- PSC().InsertBooleanVariable("--wrap-objects");
- PSC().InsertBooleanVariable("--wrap-options");
- PSC().InsertBooleanVariable("--with-deps");
- PSC().InsertBooleanVariable("--keep-objdir");
- PSC().InsertBooleanVariable("--keep-outdir");
+ PSC().InsertFlagVariable("-unix");
+ PSC().InsertFlagVariable("-windows");
+ PSC().InsertFlagVariable("-mac");
+ PSC().InsertFlagVariable("--all-os");
+ PSC().InsertFlagVariable("--flat-objects");
+ PSC().InsertFlagVariable("--flat-objpath");
+ PSC().InsertFlagVariable("--wrap-objects");
+ PSC().InsertFlagVariable("--wrap-options");
+ PSC().InsertFlagVariable("--with-deps");
+ PSC().InsertFlagVariable("--keep-objdir");
+ PSC().InsertFlagVariable("--keep-outdir");
  PSC().InsertStringVariable("--target-case","lower");
  PSC().InsertStringVariable("--macros-case","upper");
  PSC().InsertStringVariable("--quote-path","auto");
@@ -188,11 +188,12 @@ void CProcessingMachine::CreateConfiguration(void)
  PSC().InsertStringVariable("-mv",pl.Cmd_Move());
  PSC().InsertStringVariable("-md",pl.Cmd_MakeDir());
  PSC().InsertStringVariable("-mdf",pl.Cmd_ForceMakeDir());
- //PSC().InsertBooleanVariable("--no-header");
+ //PSC().InsertFlagVariable("--no-header");
  //
  //PSC().InsertIntegerVariable("-");
  //PSC().InsertFloatVariable("-");
  //PSC().InsertBooleanVariable("-");
+ //PSC().InsertFlagVariable("-");
  //PSC().InsertStringVariable("-");
  //PSC().InsertCharVariable("-");
 }
