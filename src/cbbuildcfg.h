@@ -24,6 +24,7 @@
 #include "platforms.h"
 #include "toolchains.h"
 #include "cbglobalvar.h"
+#include "cbbuiltinvar.h"
 #include "cbhelper.h"
 //------------------------------------------------------------------------------
 
@@ -35,6 +36,7 @@ class CCodeBlocksBuildConfig
   CPlatformSet m_Platforms;
   CToolChainSet m_ToolChains;
   CGlobalVariableConfig m_GlobalVariables;
+  CBuiltinVariableConfig m_BuiltInVariables;
   CStringList m_Targets;
   CString m_DefaultOptions;
   int m_TargetNameCase;
@@ -54,6 +56,7 @@ class CCodeBlocksBuildConfig
   CPlatformSet& Platforms(void) { return m_Platforms; }
   CToolChainSet& ToolChains(void) { return m_ToolChains; }
   CGlobalVariableConfig& GlobalVariables(void) { return m_GlobalVariables; }
+  CBuiltinVariableConfig& BuiltInVariables(void) { return m_BuiltInVariables; }
   CStringList& Targets(void) { return m_Targets; }
   CString& DefaultOptions(void) { return m_DefaultOptions; }
   int& TargetNameCase(void) { return m_TargetNameCase; }

@@ -45,6 +45,7 @@ CCodeBlocksProject::~CCodeBlocksProject(void)
 void CCodeBlocksProject::Clear(void)
 {
  //m_ValidProject = false;
+ m_FileName.Clear();
  m_VersionMajor = 0;
  m_VersionMinor = 0;
  m_Title.Clear();
@@ -336,6 +337,7 @@ bool CCodeBlocksProject::LoadProject(const CString& FileName)
  result = cbp.LoadFile(FileName.GetCString());
  if (!result) return false;
  Clear();
+ m_FileName = FileName;
  const TiXmlElement *root = cbp.RootElement();
  if (0==strcmp(root->Value(),"CodeBlocks_project_file"))
  {
@@ -636,6 +638,12 @@ CString CCodeBlocksProject::ToolChainSuffix(const int ToolChainIndex, CCodeBlock
 bool CCodeBlocksProject::GenerateMakefile
  (const CString& FileName, CCodeBlocksBuildConfig& Config)
 {
+ // setup project-specific built-in variables
+ Config.BuiltInVariables().SetValue(TPL_PROJECT_FILENAME_ID, m_FileName);
+ Config.BuiltInVariables().SetValue(TPL_PROJECT_NAME_ID, m_Title);
+ Config.BuiltInVariables().SetValue(TPL_PROJECT_DIR_ID, ExtractFilePath(m_FileName));
+ //Config.BuiltInVariables().SetValue(TPL_,);
+ //
  m_Dependencies.Clear();
  // setup decorated target names
  //DecorateTargetNames();

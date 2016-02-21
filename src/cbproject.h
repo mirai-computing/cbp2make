@@ -40,6 +40,7 @@ class CCodeBlocksProject
 {
  private:
   //bool m_ValidProject;
+  CString m_FileName;
   int m_VersionMajor;
   int m_VersionMinor;
   CString m_Title;

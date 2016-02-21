@@ -203,6 +203,8 @@
 			<Option target="Release" />
 			<Option target="Profile" />
 		</Unit>
+		<Unit filename="src/cbbuiltinvar.cpp" />
+		<Unit filename="src/cbbuiltinvar.h" />
 		<Unit filename="src/cbglobalvar.cpp">
 			<Option target="Debug" />
 			<Option target="Release" />
