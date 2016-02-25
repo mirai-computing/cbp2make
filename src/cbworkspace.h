@@ -53,6 +53,7 @@ class CCodeBlocksWorkspace
 {
  private:
   CString m_Title;
+  CString m_FileName;
   std::vector<CWorkspaceUnit *> m_Units;
   CStringList m_TargetNames;
   CStringList m_MakefileNames;

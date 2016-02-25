@@ -154,6 +154,7 @@ void CCodeBlocksWorkspace::SortProjectsByWeight(void)
 void CCodeBlocksWorkspace::Clear()
 {
  m_Title.Clear();
+ m_FileName.Clear();
  for (size_t i = 0; i < m_Units.size(); i++)
  {
   delete m_Units[i];
@@ -197,6 +198,7 @@ bool CCodeBlocksWorkspace::LoadWorkspace(const CString& FileName)
  result = cbw.LoadFile(FileName.GetCString());
  if (!result) return false;
  Clear();
+ m_FileName = FileName;
  const TiXmlElement *root = cbw.RootElement();
  if (0==strcmp(root->Value(),"CodeBlocks_workspace_file"))
  {
@@ -247,6 +249,12 @@ bool CCodeBlocksWorkspace::GenerateMakefile
  {
   ChangeDir(workspace_path);
  }
+ // setup workspace-specific built-in variables
+ Config.BuiltInVariables().SetValue(TPL_WORKSPACE_FILENAME_ID, m_FileName);
+ Config.BuiltInVariables().SetValue(TPL_WORKSPACE_NAME_ID, m_Title);
+ Config.BuiltInVariables().SetValue(TPL_WORKSPACE_DIR_ID, ExtractFilePath(m_FileName));
+ Config.BuiltInVariables().SetValue(TPL_MAKEFILE_ID, FileName);
+ //Config.BuiltInVariables().SetValue(TPL_,);
  //
  m_TargetNames.Clear(); m_MakefileNames.Clear(); m_TargetDeps.Clear();
  for (size_t i = 0; i < m_Units.size(); i++)

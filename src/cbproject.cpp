@@ -638,12 +638,6 @@ CString CCodeBlocksProject::ToolChainSuffix(const int ToolChainIndex, CCodeBlock
 bool CCodeBlocksProject::GenerateMakefile
  (const CString& FileName, CCodeBlocksBuildConfig& Config)
 {
- // setup project-specific built-in variables
- Config.BuiltInVariables().SetValue(TPL_PROJECT_FILENAME_ID, m_FileName);
- Config.BuiltInVariables().SetValue(TPL_PROJECT_NAME_ID, m_Title);
- Config.BuiltInVariables().SetValue(TPL_PROJECT_DIR_ID, ExtractFilePath(m_FileName));
- //Config.BuiltInVariables().SetValue(TPL_,);
- //
  m_Dependencies.Clear();
  // setup decorated target names
  //DecorateTargetNames();
@@ -668,6 +662,24 @@ bool CCodeBlocksProject::GenerateMakefile
  {
   CPlatform *pl = Config.Platforms().Platform(pi);
   if (!pl->Active()) continue;
+  // setup project-specific built-in variables
+  Config.BuiltInVariables().SetValue(TPL_PROJECT_FILENAME_ID, m_FileName);
+  Config.BuiltInVariables().SetValue(TPL_PROJECT_NAME_ID, m_Title);
+  Config.BuiltInVariables().SetValue(TPL_PROJECT_DIR_ID, ExtractFilePath(m_FileName));
+  {
+   CString s;
+   for (size_t i = 0; i < m_Units.size(); i++)
+   {
+    CBuildUnit *u = m_Units[i];
+    s.Append(pl->ProtectPath(pl->Pd(u->FileName()),Config.QuotePathMode()));
+    if ((i+1)<m_Units.size()) s.Append(' ');
+   }
+   Config.BuiltInVariables().SetValue(TPL_ALL_PROJECT_FILES_ID,s);
+  }
+  Config.BuiltInVariables().SetValue(TPL_MAKEFILE_ID, FileName);
+  //Config.BuiltInVariables().SetValue(TPL_,);
+  //
+
   CString makefile_path = ExtractFilePath(FileName);
   CString makefile_name = ExtractFileName(FileName);
   CString platform_name = pl->Name();
@@ -839,7 +851,7 @@ bool CCodeBlocksProject::GenerateMakefile
    m_Makefile.AddMacro(target->Name(STR_LIBDIR+"_",Config.MacroVariableCase()),
     CGlobalVariable::Convert(pl->Pd(target->LibDirs("$("+STR_LIBDIR+tc_suffix+")",tc->LibraryDirSwitch())),Config.MacroVariableCase()),section);
    m_Makefile.AddMacro(target->Name(STR_LIB+"_",Config.MacroVariableCase()),
-    CGlobalVariable::Convert("$("+STR_LIB+tc_suffix+")"+pl->Pd(target->Libs(*pl,tc->LinkLibrarySwitch())),Config.MacroVariableCase()),section);
+    CGlobalVariable::Convert("$("+STR_LIB+tc_suffix+") "+pl->Pd(target->Libs(*pl,tc->LinkLibrarySwitch())),Config.MacroVariableCase()),section);
    m_Makefile.AddMacro(target->Name(STR_LDFLAGS+"_",Config.MacroVariableCase()),
     CGlobalVariable::Convert(pl->Pd(target->LdFlags("$("+STR_LDFLAGS+tc_suffix+")")),Config.MacroVariableCase()),section);
    line = pl->Pd(target->ObjectOutput());

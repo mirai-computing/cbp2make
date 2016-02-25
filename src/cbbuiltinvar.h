@@ -50,7 +50,7 @@ static const hash_t TPL_WORKSPACE_DIR_ID =
 
 static const CString TPL_PROJECT_FILENAME = "PROJECT_FILENAME,PROJECT_FILE,PROJECTFILE";
 static const hash_t TPL_PROJECT_FILENAME_ID =
- sdbm_hash((unsigned char *)TPL_PROJECT_NAME.GetCString(),TPL_PROJECT_NAME.GetLength());
+ sdbm_hash((unsigned char *)TPL_PROJECT_FILENAME.GetCString(),TPL_PROJECT_FILENAME.GetLength());
 
 static const CString TPL_PROJECT_NAME = "PROJECT_NAME";
 static const hash_t TPL_PROJECT_NAME_ID =
