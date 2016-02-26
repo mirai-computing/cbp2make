@@ -254,6 +254,8 @@ bool CCodeBlocksWorkspace::GenerateMakefile
  Config.BuiltInVariables().SetValue(TPL_WORKSPACE_NAME_ID, m_Title);
  Config.BuiltInVariables().SetValue(TPL_WORKSPACE_DIR_ID, ExtractFilePath(m_FileName));
  Config.BuiltInVariables().SetValue(TPL_MAKEFILE_ID, FileName);
+ Config.BuiltInVariables().SetValue(TPL_COIN_ID, (rand()&1)?"1":"0");
+ Config.BuiltInVariables().SetValue(TPL_RANDOM_ID, rand()&0xffff);
  //Config.BuiltInVariables().SetValue(TPL_,);
  //
  m_TargetNames.Clear(); m_MakefileNames.Clear(); m_TargetDeps.Clear();
@@ -369,6 +371,15 @@ bool CCodeBlocksWorkspace::GenerateMakefile
   m_Makefile.Clear();
   ChangeDir(cwd);
  }
+ // clear workspace-specific built-in variables
+ Config.BuiltInVariables().SetValue(TPL_WORKSPACE_FILENAME_ID, "");
+ Config.BuiltInVariables().SetValue(TPL_WORKSPACE_NAME_ID, "");
+ Config.BuiltInVariables().SetValue(TPL_WORKSPACE_DIR_ID, "");
+ Config.BuiltInVariables().SetValue(TPL_MAKEFILE_ID, "");
+ Config.BuiltInVariables().SetValue(TPL_COIN_ID, "");
+ Config.BuiltInVariables().SetValue(TPL_RANDOM_ID, "");
+ //Config.BuiltInVariables().SetValue(TPL_,);
+ //
  return true;
 }
 

@@ -677,9 +677,10 @@ bool CCodeBlocksProject::GenerateMakefile
    Config.BuiltInVariables().SetValue(TPL_ALL_PROJECT_FILES_ID,s);
   }
   Config.BuiltInVariables().SetValue(TPL_MAKEFILE_ID, FileName);
+  Config.BuiltInVariables().SetValue(TPL_COIN_ID, (rand()&1)?"1":"0");
+  Config.BuiltInVariables().SetValue(TPL_RANDOM_ID, rand()&0xffff);
   //Config.BuiltInVariables().SetValue(TPL_,);
   //
-
   CString makefile_path = ExtractFilePath(FileName);
   CString makefile_name = ExtractFileName(FileName);
   CString platform_name = pl->Name();
@@ -839,6 +840,26 @@ bool CCodeBlocksProject::GenerateMakefile
    }
    CToolChain *tc = m_ToolChainIndex[tc_id];
    CString tc_suffix = ToolChainSuffix(tc_id,Config);
+   // setup target-specific built-in variables
+   Config.BuiltInVariables().SetValue(TPL_TARGET_OUTPUT_DIR_ID, ExtractFilePath(target->Output()));
+   Config.BuiltInVariables().SetValue(TPL_TARGET_OBJECT_DIR_ID, ExtractFilePath(target->ObjectOutput()));
+   Config.BuiltInVariables().SetValue(TPL_TARGET_NAME_ID, target->Title());
+   Config.BuiltInVariables().SetValue(TPL_TARGET_OUTPUT_FILE_ID, target->Output());
+   Config.BuiltInVariables().SetValue(TPL_TARGET_OUTPUT_BASENAME_ID, ExtractFileName(target->Output()));
+   //
+   {
+    CCompiler *cc_tool = tc->FindCompiler("c");
+    CCompiler *cpp_tool = tc->FindCompiler("cpp");
+    if (0==cc_tool) cc_tool = dynamic_cast<CCompiler*>(tc->GetBuildTool(0,CBuildTool::btCompiler));
+    if (0==cpp_tool) cpp_tool = dynamic_cast<CCompiler*>(tc->GetBuildTool(0,CBuildTool::btCompiler));
+    CDynamicLinker *ld_tool = dynamic_cast<CDynamicLinker*>(tc->GetBuildTool(0,CBuildTool::btDynamicLinker));
+    CStaticLinker *lib_tool = dynamic_cast<CStaticLinker*>(tc->GetBuildTool(0,CBuildTool::btStaticLinker));
+    if (cc_tool) Config.BuiltInVariables().SetValue(TPL_TARGET_CC_ID, cc_tool->Program());
+    if (cpp_tool) Config.BuiltInVariables().SetValue(TPL_TARGET_CPP_ID, cpp_tool->Program());
+    if (ld_tool) Config.BuiltInVariables().SetValue(TPL_TARGET_LD_ID, ld_tool->Program());
+    if (lib_tool) Config.BuiltInVariables().SetValue(TPL_TARGET_LIB_ID, lib_tool->Program());
+   }
+   //Config.BuiltInVariables().SetValue(TPL_,);
    //
    m_Makefile.AddMacro(target->Name(STR_INC+"_",Config.MacroVariableCase()),
     CGlobalVariable::Convert(pl->Pd(target->IncDirs("$("+STR_INC+tc_suffix+")",tc->IncludeDirSwitch())),Config.MacroVariableCase()),section);
@@ -888,6 +909,17 @@ bool CCodeBlocksProject::GenerateMakefile
      section);
    }
    section++;
+   // clear target-specific built-in variables
+   Config.BuiltInVariables().SetValue(TPL_TARGET_OUTPUT_DIR_ID, "");
+   Config.BuiltInVariables().SetValue(TPL_TARGET_OBJECT_DIR_ID, "");
+   Config.BuiltInVariables().SetValue(TPL_TARGET_NAME_ID, "");
+   Config.BuiltInVariables().SetValue(TPL_TARGET_OUTPUT_FILE_ID, "");
+   Config.BuiltInVariables().SetValue(TPL_TARGET_OUTPUT_BASENAME_ID, "");
+   Config.BuiltInVariables().SetValue(TPL_TARGET_CC_ID, "");
+   Config.BuiltInVariables().SetValue(TPL_TARGET_CPP_ID, "");
+   Config.BuiltInVariables().SetValue(TPL_TARGET_LD_ID, "");
+   Config.BuiltInVariables().SetValue(TPL_TARGET_LIB_ID, "");
+   //Config.BuiltInVariables().SetValue(TPL_,);
   }
   int target_objects_section = section;
   // common units
@@ -1375,6 +1407,15 @@ bool CCodeBlocksProject::GenerateMakefile
   text.SaveToFile(makefile_name);
   m_Makefile.Clear();
   ChangeDir(cwd);
+  // clear project-specific built-in variables
+  Config.BuiltInVariables().SetValue(TPL_PROJECT_FILENAME_ID, "");
+  Config.BuiltInVariables().SetValue(TPL_PROJECT_NAME_ID, "");
+  Config.BuiltInVariables().SetValue(TPL_PROJECT_DIR_ID, "");
+  Config.BuiltInVariables().SetValue(TPL_ALL_PROJECT_FILES_ID, "");
+  Config.BuiltInVariables().SetValue(TPL_MAKEFILE_ID, "");
+  Config.BuiltInVariables().SetValue(TPL_COIN_ID, "");
+  Config.BuiltInVariables().SetValue(TPL_RANDOM_ID, "");
+  //Config.BuiltInVariables().SetValue(TPL_,);
  }
  // clear index
  m_BuildTargetIndex.clear();
