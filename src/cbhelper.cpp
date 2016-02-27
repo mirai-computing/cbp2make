@@ -1,6 +1,6 @@
 /*
     cbp2make : Makefile generation tool for the Code::Blocks IDE
-    Copyright (C) 2010-2013 Mirai Computing (mirai.computing@gmail.com)
+    Copyright (C) 2010-2016 Mirai Computing (mirai.computing@gmail.com)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -51,6 +51,16 @@ CString XMLFriendly(const CString& AString)
 CString FlatFileName(const CString& FileName)
 {
  return FindReplaceChar(FindReplaceChar(FileName,'/','_'),'\\','_');
+}
+
+time_t TimeToReference(const time_t& Time)
+{
+ struct tm * ref_time = localtime(&Time);
+ ref_time->tm_sec = 0; ref_time->tm_min	= 0; ref_time->tm_hour	= 0; ref_time->tm_mday	= 1;
+ ref_time->tm_mon	= 0; ref_time->tm_year	= 2010-1900; ref_time->tm_isdst	= 0;
+ time_t raw_ref_time = mktime(ref_time);
+ time_t diff_time = difftime(Time,raw_ref_time);
+ return diff_time;
 }
 
 //------------------------------------------------------------------------------

@@ -17,28 +17,22 @@
 */
 
 //------------------------------------------------------------------------------
-#ifndef CBHELPER_H
-#define CBHELPER_H
+#ifndef STL_TIME_H
+#define STL_TIME_H
 //------------------------------------------------------------------------------
 #include <ctime>
 //------------------------------------------------------------------------------
 #include "stlstrings.h"
 //------------------------------------------------------------------------------
 
-static const int CASE_KEEP  = 0;
-static const int CASE_LOWER = 1;
-static const int CASE_UPPER = 2;
-
-static const int QUOTE_AUTO   = 0;
-static const int QUOTE_NEVER  = 1;
-static const int QUOTE_ALWAYS = 2;
-
-void ShowStringList(const CString& Title, const CString& LinePrefix,
-                    const CStringList& StringList);
-CString MakefileFriendly(const CString& AString);
-CString XMLFriendly(const CString& AString);
-CString FlatFileName(const CString& FileName);
-time_t TimeToReference(const time_t& Time);
+void TimeToHMS(const double Time, int& Hours, int& Minutes, int& Seconds);
+void TimeToHMSmS(const double Time, int& Hours, int& Minutes, int& Seconds, int& Miliseconds);
+void TimeToHMSmSuS(const double Time, int& Hours, int& Minutes, int& Seconds, int& Miliseconds, int& Microseconds);
+CString TimeToStrHMS(const double Time);
+CString TimeToStrHMSmS(const double Time);
+CString TimeToStrHMSmSuS(const double Time);
+CString TimeToStrF(const time_t Time, const CString& Format);
+CString GMTimeToStrF(const time_t Time, const CString& Format);
 
 #endif
 //------------------------------------------------------------------------------

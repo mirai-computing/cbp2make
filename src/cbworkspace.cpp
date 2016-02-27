@@ -1,6 +1,6 @@
 /*
     cbp2make : Makefile generation tool for the Code::Blocks IDE
-    Copyright (C) 2010-2013 Mirai Computing (mirai.computing@gmail.com)
+    Copyright (C) 2010-2016 Mirai Computing (mirai.computing@gmail.com)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 #include "cbbuildcfg.h"
 #include "cbhelper.h"
 #include "stlfutils.h"
+#include "stltime.h"
 #include "tinyxml.h"
 //------------------------------------------------------------------------------
 
@@ -256,6 +257,19 @@ bool CCodeBlocksWorkspace::GenerateMakefile
  Config.BuiltInVariables().SetValue(TPL_MAKEFILE_ID, FileName);
  Config.BuiltInVariables().SetValue(TPL_COIN_ID, (rand()&1)?"1":"0");
  Config.BuiltInVariables().SetValue(TPL_RANDOM_ID, rand()&0xffff);
+ //
+ time_t build_time; time(&build_time);
+ Config.BuiltInVariables().SetValue(TPL_TDAY_ID,TimeToStrF(build_time,"%Y%m%d"));
+ Config.BuiltInVariables().SetValue(TPL_TODAY_ID,TimeToStrF(build_time,"%Y-%m-%d"));
+ Config.BuiltInVariables().SetValue(TPL_NOW_ID,TimeToStrF(build_time,"%Y-%m-%d-%H.%M"));
+ Config.BuiltInVariables().SetValue(TPL_NOW_L_ID,TimeToStrF(build_time,"%Y-%m-%d-%H.%M.%S"));
+ Config.BuiltInVariables().SetValue(TPL_WEEKDAY_ID,TimeToStrF(build_time,"%A"));
+ Config.BuiltInVariables().SetValue(TPL_TDAY_UTC_ID,TimeToStrF(build_time,"%Y%m%d"));
+ Config.BuiltInVariables().SetValue(TPL_TODAY_UTC_ID,TimeToStrF(build_time,"%Y-%m-%d"));
+ Config.BuiltInVariables().SetValue(TPL_NOW_UTC_ID,TimeToStrF(build_time,"%Y-%m-%d-%H.%M"));
+ Config.BuiltInVariables().SetValue(TPL_NOW_L_UTC_ID,TimeToStrF(build_time,"%Y-%m-%d-%H.%M.%S"));
+ Config.BuiltInVariables().SetValue(TPL_WEEKDAY_UTC_ID,TimeToStrF(build_time,"%A"));
+ Config.BuiltInVariables().SetValue(TPL_DAYCOUNT_ID,TimeToStrF(TimeToReference(build_time),"%d"));
  //Config.BuiltInVariables().SetValue(TPL_,);
  //
  m_TargetNames.Clear(); m_MakefileNames.Clear(); m_TargetDeps.Clear();
@@ -378,6 +392,18 @@ bool CCodeBlocksWorkspace::GenerateMakefile
  Config.BuiltInVariables().SetValue(TPL_MAKEFILE_ID, "");
  Config.BuiltInVariables().SetValue(TPL_COIN_ID, "");
  Config.BuiltInVariables().SetValue(TPL_RANDOM_ID, "");
+ //
+ Config.BuiltInVariables().SetValue(TPL_TDAY_ID,"");
+ Config.BuiltInVariables().SetValue(TPL_TODAY_ID,"");
+ Config.BuiltInVariables().SetValue(TPL_NOW_ID,"");
+ Config.BuiltInVariables().SetValue(TPL_NOW_L_ID,"");
+ Config.BuiltInVariables().SetValue(TPL_WEEKDAY_ID,"");
+ Config.BuiltInVariables().SetValue(TPL_TDAY_UTC_ID,"");
+ Config.BuiltInVariables().SetValue(TPL_TODAY_UTC_ID,"");
+ Config.BuiltInVariables().SetValue(TPL_NOW_UTC_ID,"");
+ Config.BuiltInVariables().SetValue(TPL_NOW_L_UTC_ID,"");
+ Config.BuiltInVariables().SetValue(TPL_WEEKDAY_UTC_ID,"");
+ Config.BuiltInVariables().SetValue(TPL_DAYCOUNT_ID,"");
  //Config.BuiltInVariables().SetValue(TPL_,);
  //
  return true;
