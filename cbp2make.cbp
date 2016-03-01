@@ -123,6 +123,16 @@
 			<Option target="Release" />
 			<Option target="Profile" />
 		</Unit>
+		<Unit filename="lib/stltime.cpp">
+			<Option target="Debug" />
+			<Option target="Release" />
+			<Option target="Profile" />
+		</Unit>
+		<Unit filename="lib/stltime.h">
+			<Option target="Debug" />
+			<Option target="Release" />
+			<Option target="Profile" />
+		</Unit>
 		<Unit filename="lib/stlvariables.cpp">
 			<Option target="Debug" />
 			<Option target="Release" />
