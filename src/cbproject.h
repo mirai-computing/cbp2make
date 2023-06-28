@@ -51,6 +51,7 @@ class CCodeBlocksProject
   CStringList m_LinkerOptions;
   CStringList m_LinkerLibraries;
   CStringList m_LinkerDirectories;
+  CStringList m_ResourceCompilerOptions;
   CStringList m_ResourceCompilerDirectories;
   CStringList m_BeforeBuildCommands;
   CStringList m_AfterBuildCommands;

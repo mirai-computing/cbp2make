@@ -824,7 +824,7 @@ void CGNUWindowsResourceCompiler::Reset(const CPlatform::OS_Type OS)
  m_Alias = "gnu_windres_compiler";
  m_Description = "GNU Windows Resource Compiler";
  m_MakeVariable = "WINDRES";
- m_CommandTemplate = "$rescomp -i $file -J rc -o $resource_output -O coff $includes";
+ m_CommandTemplate = "$rescomp $res_options -i $file -o $resource_output -O coff $res_includes";
  m_SourceExtensions.Clear()<<"rc"<<"res"<<"coff";
  m_TargetExtension = "o";
  if (CPlatform::OS_Windows==OS) m_Program = "windres.exe";

@@ -221,7 +221,9 @@ CString CBuildTarget::RCFlags(void)
 
 CString CBuildTarget::RCFlags(const CString& ProjectRCFlags)
 {
- return MakeOptions(m_ResourceCompilerOptionsRelation,ProjectRCFlags,RCFlags());
+ //return MakeOptions(m_ResourceCompilerOptionsRelation,ProjectRCFlags,RCFlags());
+ // C::B uses common option relations for compiler and resources compiler
+ return MakeOptions(m_CompilerOptionsRelation,ProjectRCFlags,RCFlags());
 }
 
 CString CBuildTarget::LdFlags(void)
@@ -455,6 +457,10 @@ void CBuildTarget::Read(const TiXmlElement *TargetRoot)
    if (0!=option)
    {
     char *value = 0;
+    if ((value = (char *)option->Attribute("option")))
+    {
+     m_ResourceCompilerOptions.Insert(value);
+    }
     if ((value = (char *)option->Attribute("directory")))
     {
      m_ResourceCompilerDirectories.Insert(value);
@@ -594,6 +600,7 @@ void CBuildTarget::Show(void)
           <<OptionsRelationName(m_LibraryDirectoriesRelation).GetCString()<<std::endl;
  ShowStringList("Compiler options","Option",m_CompilerOptions);
  ShowStringList("Compiler directories","Directory",m_CompilerDirectories);
+ ShowStringList("Resource compiler options","Option",m_ResourceCompilerOptions);
  ShowStringList("Resource compiler directories","Directory",m_ResourceCompilerDirectories);
  ShowStringList("Linker options","Option",m_LinkerOptions);
  ShowStringList("Linker directories","Directory",m_LinkerDirectories);

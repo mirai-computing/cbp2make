@@ -74,7 +74,7 @@ class CBuildTarget
   OptionsRelation m_IncludeDirectoriesRelation;
   OptionsRelation m_ResourceIncludeDirectoriesRelation;
   OptionsRelation m_LibraryDirectoriesRelation;
-  OptionsRelation m_ResourceCompilerOptionsRelation;
+//  OptionsRelation m_ResourceCompilerOptionsRelation;
   //
   int m_NameCase;
   CString m_UCName;

@@ -660,6 +660,7 @@ static const CString TPL_RES_COMPILER    = "$rescomp";
 static const CString TPL_LINKER          = "$linker";
 static const CString TPL_LIB_LINKER      = "$lib_linker";
 static const CString TPL_OPTIONS         = "$options";
+static const CString TPL_RES_OPTIONS     = "$res_options";
 static const CString TPL_RES_INCLUDES    = "$res_includes";
 static const CString TPL_INCLUDES        = "$includes";
 static const CString TPL_FILE            = "$file";

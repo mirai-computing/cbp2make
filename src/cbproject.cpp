@@ -215,6 +215,10 @@ void CCodeBlocksProject::Read(const TiXmlElement *ProjectRoot)
     if (0!=option)
     {
      char *value = 0;
+     if ((value = (char *)option->Attribute("option")))
+     {
+      m_ResourceCompilerOptions.Insert(value);
+     }
      if ((value = (char *)option->Attribute("directory")))
      {
       m_ResourceCompilerDirectories.Insert(value);
@@ -405,6 +409,16 @@ void CCodeBlocksProject::Show(void)
  for (int i = 0, n = m_CompilerDirectories.GetCount(); i < n; i++)
  {
   std::cout<<"Directory #"<<(i+1)<<": "<<m_CompilerDirectories[i].GetString()<<std::endl;
+ }
+ std::cout<<"Resource compiler options: "<<m_ResourceCompilerOptions.GetCount()<<std::endl;
+ for (int i = 0, n = m_ResourceCompilerOptions.GetCount(); i < n; i++)
+ {
+  std::cout<<"Option #"<<(i+1)<<": "<<m_ResourceCompilerOptions[i].GetString()<<std::endl;
+ }
+ std::cout<<"Resource compiler directories: "<<m_ResourceCompilerDirectories.GetCount()<<std::endl;
+ for (int i = 0, n = m_ResourceCompilerDirectories.GetCount(); i < n; i++)
+ {
+  std::cout<<"Directory #"<<(i+1)<<": "<<m_ResourceCompilerDirectories[i].GetString()<<std::endl;
  }
  std::cout<<"Linker options: "<<m_LinkerOptions.GetCount()<<std::endl;
  for (int i = 0, n = m_LinkerOptions.GetCount(); i < n; i++)
@@ -774,8 +788,18 @@ bool CCodeBlocksProject::GenerateMakefile
     line = JoinStr(line,m_CompilerOptions[i],' ');
    }
    m_Makefile.AddMacro(STR_CFLAGS+tc_suffix,CGlobalVariable::Convert(line,Config.MacroVariableCase()),section);
+   line.Clear();
+   for (int i = 0; i < m_ResourceCompilerOptions.GetCount(); i++)
+   {
+    line = JoinStr(line,m_ResourceCompilerOptions[i],' ');
+   }
+   m_Makefile.AddMacro(STR_RCFLAGS+tc_suffix,CGlobalVariable::Convert(line,Config.MacroVariableCase()),section);
+   line.Clear();
+   for (int i = 0; i < m_ResourceCompilerDirectories.GetCount(); i++)
+   {
+    line = JoinStr(line,tc->IncludeDirSwitch()+pl->ProtectPath(pl->Pd(m_ResourceCompilerDirectories[i]),Config.QuotePathMode()),' ');
+   }
    m_Makefile.AddMacro(STR_RESINC+tc_suffix,"",section);
-   //m_Makefile.AddMacro("RCFLAGS","",section);//not supported by CB build system
    line.Clear();
    for (int i = 0; i < m_LinkerDirectories.GetCount(); i++)
    {
@@ -1203,6 +1227,11 @@ bool CCodeBlocksProject::GenerateMakefile
        }
       }
 
+      if (!compiler->TargetExtension().IsEmpty())
+      {
+       // override default linker obnject extension
+       object_extension = "."+compiler->TargetExtension();
+      }
       CString object_name;
       if (m_ExtendedObjectNames)
       {
@@ -1261,6 +1290,7 @@ bool CCodeBlocksProject::GenerateMakefile
       cmd_args.SetStringVariable(TPL_FILE,unit_name);
       cmd_args.SetStringVariable(TPL_OBJECT,object_prefix_name);
       cmd_args.SetStringVariable(TPL_RES_COMPILER,"$("+DecorateVariableName(compiler_var+tc_suffix,Config.MacroVariableCase())+")");
+      cmd_args.SetStringVariable(TPL_RES_OPTIONS,"$("+target->Name(STR_RCFLAGS+"_",Config.MacroVariableCase())+")");
       cmd_args.SetStringVariable(TPL_RES_INCLUDES,"$("+target->Name(STR_RESINC+"_",Config.MacroVariableCase())+")");
       cmd_args.SetStringVariable(TPL_RES_OUTPUT,object_prefix_name);
       line = compiler->MakeCommand(cmd_args);
