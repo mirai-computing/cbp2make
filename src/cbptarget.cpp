@@ -295,13 +295,17 @@ CString CBuildTarget::Libs(const CPlatform& Platform, const CString& LinkLibSwit
   CString lib_ext = ExtractFileExt(lib_name);
   //if (lib_ext.IsEmpty()) // wrong for files with dots but without .a extension
   //if (lib_ext==AutoFileExtension(OS,CBuildTarget::ttStaticLibrary)) // a plaform may have several valid extensions
-  if (Platform.IsStaticLibraryExtension(lib_ext))
+  std::cout<<i<<' '<<lib_name.GetCString()<<std::endl;
+  if (Platform.IsLibraryExtension(lib_ext))
   {
-   result = JoinStr(result,lib_name,' ');
+   //result = JoinStr(result,lib_name,' ');
+   CString lib_base_name = Platform.BaseLibraryName(lib_name,lib_ext);
+   result = JoinStr(result,LinkLibSwitch+lib_base_name,' ');
   }
   else
   {
-   result = JoinStr(result,LinkLibSwitch+lib_name,' ');
+   //result = JoinStr(result,LinkLibSwitch+lib_name,' ');
+   result = JoinStr(result,lib_name,' ');
   }
  }
  return result;

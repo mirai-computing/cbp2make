@@ -809,11 +809,16 @@ bool CCodeBlocksProject::GenerateMakefile
    line.Clear();
    for (int i = 0; i < m_LinkerLibraries.GetCount(); i++)
    {
-    CString lib_name = m_LinkerLibraries[i];
-    CString lib_ext = ExtractFileExt(lib_name);
-    if (lib_ext.IsEmpty())
+    CString lib_pathname = m_LinkerLibraries[i];
+    CString lib_path, lib_name, lib_ext;
+    SplitFilePathName(lib_pathname, lib_path, lib_name, lib_ext);
+    //CString lib_name = m_LinkerLibraries[i];
+    //CString lib_ext = ExtractFileExt(lib_name);
+    //if (lib_ext.IsEmpty())
+    if (pl->IsLibraryExtension(lib_ext))
     {
-     line = JoinStr(line,tc->LinkLibrarySwitch()+pl->ProtectPath(pl->Pd(lib_name),Config.QuotePathMode()),' ');
+     CString lib_base_name = pl->BaseLibraryName(lib_name,lib_ext);
+     line = JoinStr(line,tc->LinkLibrarySwitch()+pl->ProtectPath(pl->Pd(lib_base_name),Config.QuotePathMode()),' ');
     }
     else
     {
