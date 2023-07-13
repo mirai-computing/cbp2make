@@ -1246,6 +1246,21 @@ CString TrimStr(const CString& AString)
  return SubStr(AString,first_pos,last_pos);
 }
 
+bool IsTabOrSpace(const char AChar)
+{
+ return (' '==AChar) || ('\t'==AChar);
+}
+
+CString TrimStr2(const CString& AString)
+{
+ int first_pos = 0, last_pos = AString.GetLength()-1;
+ for (int i = first_pos; i <= last_pos; i++)
+ { if (IsTabOrSpace(AString.GetChar(i))) first_pos++; else break; }
+ for (int i = last_pos; i > first_pos; i--)
+ { if (IsTabOrSpace(AString.GetChar(i))) last_pos--; else break; }
+ return SubStr(AString,first_pos,last_pos);
+}
+
 CString LeadStr(const CString& AString, const unsigned int RLength)
 {
  CString result;
@@ -1668,6 +1683,16 @@ CString UnshieldChars(const CString& AString, const CString& Chars)
  }
  if (shield) result.Append('\\');
  return result;
+}
+
+bool StrBeginsWith(const CString& AString, const CString& StartChars, bool IgnoreSpaces)
+{
+ if (IgnoreSpaces)
+ {
+  CString s = TrimStr2(AString);
+  if (0==FindStr(s,StartChars)) return true;
+ }
+ return (0==FindStr(AString,StartChars));
 }
 
 //------------------------------------------------------------------------------

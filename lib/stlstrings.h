@@ -486,6 +486,8 @@ int PrevCharPos(const CString& AString, const char AChar, const int Position);
 int FirstCharPos(const CString& AString, const char AChar);
 int LastCharPos(const CString& AString, const char AChar);
 CString TrimStr(const CString& AString);
+bool IsTabOrSpace(const char AChar);
+CString TrimStr2(const CString& AString); // trims tabs and spaces from both ends
 CString LeadStr(const CString& AString, const unsigned int RLength);
 void ParseStr(const CString& AString, const CString& Delimiters, CStringList& SubStrings);
 void ParseStr(const CString& AString, const char Delimiter, CStringList& SubStrings);
@@ -521,6 +523,7 @@ CString ShieldSpaces(const CString& AString);
 CString UnshieldSpaces(const CString& AString);
 CString ShieldChars(const CString& AString, const CString& Chars);
 CString UnshieldChars(const CString& AString, const CString& Chars);
+bool StrBeginsWith(const CString& AString, const CString& StartChars, bool IgnoreSpaces);
 
 //---------------------------------------------------------------------------
 #endif
