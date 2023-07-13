@@ -61,6 +61,9 @@ void CPlatform::Clear(void)
  m_Cmd_EvalWorkDir.Clear();
  m_Cmd_ChangeDir.Clear();
  m_PathDelimiter = '/';
+ m_LibraryPrefix.Clear();
+ m_StaticLibraryExtensions.Clear();
+ m_DynamicLibraryExtensions.Clear();
 }
 
 void CPlatform::Assign(const CPlatform& Platform)
@@ -84,6 +87,9 @@ void CPlatform::Assign(const CPlatform& Platform)
  m_Cmd_EvalWorkDir  = Platform.m_Cmd_EvalWorkDir;
  m_Cmd_ChangeDir    = Platform.m_Cmd_ChangeDir;
  m_PathDelimiter    = Platform.m_PathDelimiter;
+ m_LibraryPrefix    = Platform.m_LibraryPrefix;
+ m_StaticLibraryExtensions = Platform.m_StaticLibraryExtensions;
+ m_DynamicLibraryExtensions = Platform.m_DynamicLibraryExtensions;
 }
 
 CString CPlatform::Name(const OS_Type PlatformOS)
@@ -226,6 +232,28 @@ bool CPlatform::IsDynamicLibraryExtension(const CString& Ext) const
  return (m_DynamicLibraryExtensions.FindString(Ext) >= 0);
 }
 
+bool CPlatform::IsLibraryExtension(const CString& Ext) const
+{
+ return IsStaticLibraryExtension(Ext) || IsDynamicLibraryExtension(Ext);
+}
+
+CString CPlatform::BaseLibraryName(const CString& Name, const CString& Ext) const
+{
+ if (IsLibraryExtension(Ext))
+ {
+  CString base_name = Name;
+  if (!m_LibraryPrefix.IsEmpty())
+  {
+   if (StrBeginsWith(base_name,m_LibraryPrefix,true))
+   {
+    base_name = RightStr(Name,m_LibraryPrefix.GetLength());
+    return base_name;
+   }
+  }
+ }
+ return Name;
+}
+
 void CPlatform::Reset(const CPlatform::OS_Type OS)
 {
  m_OS_Type = OS;
@@ -248,10 +276,11 @@ void CPlatform::Reset(const CPlatform::OS_Type OS)
    m_Cmd_ForceMakeDir = "mkdir -p $dir";
    m_Cmd_RemoveDir = "rm -rf $dir";
    m_Cmd_PrintWorkDir = "pwd";
-   m_Cmd_EvalWorkDir = "`pwd`";
+   m_Cmd_EvalWorkDir = "$PWD";
    m_Cmd_ChangeDir = "cd $dir";
    m_PathDelimiter = '/';
    //
+   m_LibraryPrefix = "lib";
    m_StaticLibraryExtensions.Clear()<<"a"<<"lib";
    m_DynamicLibraryExtensions.Clear()<<"so";
    break;
@@ -276,6 +305,7 @@ void CPlatform::Reset(const CPlatform::OS_Type OS)
    m_Cmd_ChangeDir = "cd $dir";
    m_PathDelimiter = '\\';
    //
+   m_LibraryPrefix = "lib";
    m_StaticLibraryExtensions.Clear()<<"lib"<<"a";
    m_DynamicLibraryExtensions.Clear()<<"dll";
    break;
@@ -300,6 +330,7 @@ void CPlatform::Reset(const CPlatform::OS_Type OS)
    m_Cmd_ChangeDir = "cd $dir";
    m_PathDelimiter = '/';
    //
+   m_LibraryPrefix = "lib";
    m_StaticLibraryExtensions.Clear()<<"a";
    m_DynamicLibraryExtensions.Clear()<<"dylib";
    break;
@@ -358,6 +389,7 @@ void CPlatform::Read(const TiXmlElement *PlatformRoot)
 	Read(PlatformRoot,"print_work_dir",m_Cmd_PrintWorkDir);
 	Read(PlatformRoot,"eval_work_dir",m_Cmd_EvalWorkDir);
 	Read(PlatformRoot,"change_dir",m_Cmd_ChangeDir);
+	Read(PlatformRoot,"lib_prefix",m_LibraryPrefix);
  {
   CString s; CStringList l;
   Read(PlatformRoot,"static_lib_ext",s);
@@ -414,6 +446,7 @@ void CPlatform::Write(TiXmlElement *PlatformRoot)
 	Write(PlatformRoot,"print_work_dir",m_Cmd_PrintWorkDir);
 	Write(PlatformRoot,"eval_work_dir",m_Cmd_EvalWorkDir);
 	Write(PlatformRoot,"change_dir",m_Cmd_ChangeDir);
+	Write(PlatformRoot,"lib_prefix",m_LibraryPrefix);
  Write(PlatformRoot,"static_lib_ext",m_StaticLibraryExtensions.Join(" "));
  Write(PlatformRoot,"dynamic_lib_ext",m_DynamicLibraryExtensions.Join(" "));
 	//Write(PlatformRoot,"",m_);

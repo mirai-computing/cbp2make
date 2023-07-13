@@ -63,6 +63,7 @@ class CPlatform
   CString m_Cmd_ChangeDir;
   char m_PathDelimiter;
   //
+  CString m_LibraryPrefix;
   CStringList m_StaticLibraryExtensions;
   CStringList m_DynamicLibraryExtensions;
   //CString m_;
@@ -105,8 +106,11 @@ class CPlatform
   CString ChangeDir(const CString& Path) const;
   CString MakefileCmd(const CString& Command) const;
   //
+  CString LibraryPrefix(void) const { return m_LibraryPrefix; }
   bool IsStaticLibraryExtension(const CString& Ext) const;
   bool IsDynamicLibraryExtension(const CString& Ext) const;
+  bool IsLibraryExtension(const CString& Ext) const;
+  CString BaseLibraryName(const CString& Name, const CString& Ext) const;
   //CString (void) const { return m_; }
  private:
   void Read(const TiXmlElement *Root, const CString& Name, CString& Value);

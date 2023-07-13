@@ -1,0 +1,12 @@
+!.gitignore
+bin
+obj
+dox
+tmp
+*.cbTemp
+*.depend
+*.layout
+*.cscope*
+*_build_log.html
+build_*.txt
+Makefile
