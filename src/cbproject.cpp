@@ -1,6 +1,6 @@
 /*
     cbp2make : Makefile generation tool for the Code::Blocks IDE
-    Copyright (C) 2010-2013 Mirai Computing (mirai.computing@gmail.com)
+    Copyright (C) 2010-2023 Mirai Computing (mirai.computing@gmail.com)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -604,6 +604,30 @@ void CCodeBlocksProject::UpdateTargetIndex
  //std::cout<<"Unit index is updated."<<std::endl;
 }
 
+int CCodeBlocksProject::FindBuildTarget(const CString& Name, CCodeBlocksBuildConfig& Config)
+{
+ CString name = DecorateTargetName(Name, Config.TargetNameCase());
+ for (int i = 0, ni = m_BuildTargets.size(); i < ni; i++)
+ {
+  CBuildTarget *bt = m_BuildTargets[i];
+  CString target_name = DecorateTargetName(bt->Name(""), Config.TargetNameCase());
+  if (target_name == name) return i;
+ }
+ return INVALID_INDEX;
+}
+
+int CCodeBlocksProject::FindVirtualTarget(const CString& Name, CCodeBlocksBuildConfig& Config)
+{
+ CString name = DecorateTargetName(Name, Config.TargetNameCase());
+ for (int i = 0, ni = m_VirtualTargets.size(); i < ni; i++)
+ {
+  CVirtualTarget *vt = m_VirtualTargets[i];
+  CString target_name = DecorateTargetName(vt->Name(""), Config.TargetNameCase());
+  if (target_name == name) return i;
+ }
+ return INVALID_INDEX;
+}
+
 CString CCodeBlocksProject::DecorateTargetName(const CString& TargetName, const int Case)
 {
  CString result = MakefileFriendly(TargetName);
@@ -910,8 +934,10 @@ bool CCodeBlocksProject::GenerateMakefile
   bool have_global_commands = (m_BeforeBuildCommands.GetCount()>0)
                             || (m_AfterBuildCommands.GetCount()>0);
   // default virtual targets
+  bool rename_rule_all = (INVALID_INDEX != FindBuildTarget("all",Config)) ||
+                         (INVALID_INDEX != FindVirtualTarget("all",Config));
   CMakefileRule& rule_all = m_Makefile.AddRule
-   (DecorateTargetName("all",Config.TargetNameCase()),section);
+   (DecorateTargetName(rename_rule_all?"default_all":"all",Config.TargetNameCase()),section);
   for (size_t t = 0; t < m_BuildTargetIndex.size(); t++)
   {
    CBuildTarget *target = m_BuildTargetIndex[t];
@@ -924,8 +950,10 @@ bool CCodeBlocksProject::GenerateMakefile
     rule_all.Dependencies().Insert(target->Name(""));
    }
   }
+  bool rename_rule_clean = (INVALID_INDEX != FindBuildTarget("clean",Config)) ||
+                           (INVALID_INDEX != FindVirtualTarget("clean",Config));
   CMakefileRule& rule_clean = m_Makefile.AddRule
-   (DecorateTargetName("clean",Config.TargetNameCase()),section);
+   (DecorateTargetName(rename_rule_clean?"default_clean":"clean",Config.TargetNameCase()),section);
   for (size_t t = 0; t < m_BuildTargetIndex.size(); t++)
   {
    CBuildTarget *target = m_BuildTargetIndex[t];
@@ -1111,7 +1139,10 @@ bool CCodeBlocksProject::GenerateMakefile
       if (0!=linker)
       {
        // pass linker option for GUI builds
-       if ((pl->OS()==CPlatform::OS_Windows) && (target->Type()==CBuildTarget::ttExecutable))
+       //
+       // platform check is disabled to allow cross-platform builds
+       //if ((pl->OS()==CPlatform::OS_Windows) && (target->Type()==CBuildTarget::ttExecutable))
+       if (!linker->OptionWinGUI().IsEmpty())
        {
         CVariable& v = cmd_args.VarNamed(TPL_LNK_OPTIONS);
         v.SetString(v.GetString()+" "+linker->OptionWinGUI());
@@ -1356,7 +1387,8 @@ bool CCodeBlocksProject::GenerateMakefile
   for (size_t t = 0; t < m_VirtualTargetIndex.size(); t++)
   {
    CVirtualTarget *v_target = m_VirtualTargetIndex[t];
-   CMakefileRule& rule_v_target = m_Makefile.AddRule(v_target->Name("virtual_"),section);
+   //CMakefileRule& rule_v_target = m_Makefile.AddRule(v_target->Name("virtual_"),section);
+   CMakefileRule& rule_v_target = m_Makefile.AddRule(v_target->Name(""),section);
    if (have_global_commands)//(m_BeforeBuildCommands.GetCount()>0)
    {
     rule_v_target.Dependencies().Insert(DecorateTargetName("before_build",Config.TargetNameCase()));

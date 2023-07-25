@@ -1,6 +1,6 @@
 /*
     cbp2make : Makefile generation tool for the Code::Blocks IDE
-    Copyright (C) 2010-2013 Mirai Computing (mirai.computing@gmail.com)
+    Copyright (C) 2010-2023 Mirai Computing (mirai.computing@gmail.com)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -84,6 +84,8 @@ class CCodeBlocksProject
  private:
   void UpdatePlatformIndex(const size_t Platform, CCodeBlocksBuildConfig& Config);
   void UpdateTargetIndex(const int Target, CCodeBlocksBuildConfig& Config);
+  int FindBuildTarget(const CString& Name, CCodeBlocksBuildConfig& Config);
+  int FindVirtualTarget(const CString& Name, CCodeBlocksBuildConfig& Config);
  public:
   static CString DecorateVariableName(const CString& VariableName, const int Case = 0);
   static CString DecorateTargetName(const CString& TargetName, const int Case = 2);

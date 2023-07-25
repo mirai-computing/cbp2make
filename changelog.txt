@@ -1,4 +1,8 @@
 KEY [ ]pending [+]new/added [-]removed [*]changed/in-progress [!]fixed
+--- revision #156 : 23jun2023 ---
+[+] Resource compiler options by aafemt (https://github.com/aafemt)
+[*] Recognize and process only platform-specific library extensions.
+[*] Remove 'virtual_' prefix from virtual targets, rename default 'all'/'clean' targets in case of collision.
 --- revision #147 : 09jun2013 ---
 [!] Fixed setting of automatic file prefix for targets ('lib' for static libraries, etc).
 [+] Partially reworked support for multiple toolchains.
