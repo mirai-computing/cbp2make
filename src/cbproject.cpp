@@ -839,14 +839,21 @@ bool CCodeBlocksProject::GenerateMakefile
     //CString lib_name = m_LinkerLibraries[i];
     //CString lib_ext = ExtractFileExt(lib_name);
     //if (lib_ext.IsEmpty())
-    if (pl->IsLibraryExtension(lib_ext))
+    if (lib_path.IsEmpty())
     {
-     CString lib_base_name = pl->BaseLibraryName(lib_name,lib_ext);
-     line = JoinStr(line,tc->LinkLibrarySwitch()+pl->ProtectPath(pl->Pd(lib_base_name),Config.QuotePathMode()),' ');
+     if (pl->IsLibraryExtension(lib_ext))
+     {
+      CString lib_base_name = pl->BaseLibraryName(lib_name,lib_ext);
+      line = JoinStr(line,tc->LinkLibrarySwitch()+pl->ProtectPath(pl->Pd(lib_base_name),Config.QuotePathMode()),' ');
+     }
+     else
+     {
+      line = JoinStr(line,tc->LinkLibrarySwitch()+pl->ProtectPath(pl->Pd(lib_name),Config.QuotePathMode()),' ');
+     }
     }
     else
     {
-     line = JoinStr(line,pl->ProtectPath(pl->Pd(lib_name),Config.QuotePathMode()),' ');
+     line = JoinStr(line,pl->ProtectPath(pl->Pd(lib_pathname),Config.QuotePathMode()),' ');
     }
    }
    m_Makefile.AddMacro(STR_LIB+tc_suffix,CGlobalVariable::Convert(line,Config.MacroVariableCase()),section);
