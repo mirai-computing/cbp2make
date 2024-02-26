@@ -124,6 +124,7 @@ class CBuildTarget
   CString LibDirs(const CString& LibDirSwitch);
   CString LibDirs(const CString& ProjectLibDirs, const CString& LibDirSwitch);
   CString Libs(const CPlatform& Platform, const CString& LinkLibSwitch);
+  CString Libs(const CString& ProjectLibs, const CPlatform& Platform, const CString& LinkLibSwitch);
   CString ExtDeps(void);
  public:
   void Clear(void);

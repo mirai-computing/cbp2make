@@ -1,4 +1,8 @@
 KEY [ ]pending [+]new/added [-]removed [*]changed/in-progress [!]fixed
+--- revision #160 : 13dec2023 ---
+[*] Fixed application of project-target link options order for LIBS macro and missing spacing.
+--- revision #158 : 13dec2023 ---
+[*] Reworked library name processing for global and target options.
 --- revision #156 : 23jun2023 ---
 [+] Resource compiler options by aafemt (https://github.com/aafemt)
 [*] Recognize and process only platform-specific library extensions.

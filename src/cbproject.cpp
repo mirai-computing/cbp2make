@@ -890,8 +890,10 @@ bool CCodeBlocksProject::GenerateMakefile
     CGlobalVariable::Convert(pl->Pd(target->RCFlags("$("+STR_RCFLAGS+tc_suffix+")")),Config.MacroVariableCase()),section);
    m_Makefile.AddMacro(target->Name(STR_LIBDIR+"_",Config.MacroVariableCase()),
     CGlobalVariable::Convert(pl->Pd(target->LibDirs("$("+STR_LIBDIR+tc_suffix+")",tc->LibraryDirSwitch())),Config.MacroVariableCase()),section);
+//   m_Makefile.AddMacro(target->Name(STR_LIB+"_",Config.MacroVariableCase()),
+//    CGlobalVariable::Convert("$("+STR_LIB+tc_suffix+") "+pl->Pd(target->Libs(*pl,tc->LinkLibrarySwitch())),Config.MacroVariableCase()),section);
    m_Makefile.AddMacro(target->Name(STR_LIB+"_",Config.MacroVariableCase()),
-    CGlobalVariable::Convert("$("+STR_LIB+tc_suffix+")"+pl->Pd(target->Libs(*pl,tc->LinkLibrarySwitch())),Config.MacroVariableCase()),section);
+    CGlobalVariable::Convert(pl->Pd(target->Libs("$("+STR_LIB+tc_suffix+")",*pl,tc->LinkLibrarySwitch())),Config.MacroVariableCase()),section);
    m_Makefile.AddMacro(target->Name(STR_LDFLAGS+"_",Config.MacroVariableCase()),
     CGlobalVariable::Convert(pl->Pd(target->LdFlags("$("+STR_LDFLAGS+tc_suffix+")")),Config.MacroVariableCase()),section);
    line = pl->Pd(target->ObjectOutput());

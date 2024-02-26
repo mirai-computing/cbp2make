@@ -319,6 +319,11 @@ CString CBuildTarget::Libs(const CPlatform& Platform, const CString& LinkLibSwit
  return result;
 }
 
+CString CBuildTarget::Libs(const CString& ProjectLibs, const CPlatform& Platform, const CString& LinkLibSwitch)
+{
+ return MakeOptions(m_LinkerOptionsRelation,ProjectLibs,Libs(Platform,LinkLibSwitch));
+}
+
 CString CBuildTarget::ExtDeps(void)
 {
  CString result;
