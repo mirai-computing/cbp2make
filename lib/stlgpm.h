@@ -1,6 +1,6 @@
 /*
     cbp2make : Makefile generation tool for the Code::Blocks IDE
-    Copyright (C) 2010-2023 Mirai Computing (mirai.computing@gmail.com)
+    Copyright (C) 2010-2026 Mirai Computing (mirai.computing@gmail.com)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,42 +26,66 @@
 class CGenericProcessingMachine
 {
  protected:
+  CString m_ConfigurationFileName;
   CConfiguration m_FileConfiguration;
   CParameterStringConfiguration m_ParameterStringConfiguration;
   CParameterString m_ParameterString;
   CStringList m_InputFileList;
   CStringList m_OutputFileList;
+  CString m_InputDirectory;
+  CString m_OutputDirectory;
   int m_FileIndex;
   bool m_AliasesEnabled;
   int m_FileNameLength;
   bool m_VerboseMode;
   bool m_QuietMode;
   bool m_HelpMode;
+  int m_DebugLevel;
+  bool m_SaveOutputList;
+  bool m_MergedConfiguration;
+  bool m_Initialized;
+  bool m_DoRenameOutputFile;
+  bool m_DoCreateOutputList;
+  CString m_SourceFileName;
+  CString m_TargetFileName;
+  bool m_ProcessingStatus;
  protected:
-  virtual void Initialize(void);
+  virtual bool Initialize(void);
+  virtual CString GetSourceFilePath(const int Index);
+  virtual CString GetTargetFileName(const int Index);
+  virtual CString GetTargetFilePath(const int Index);
  public:
-  virtual void Initialize(int argc, char * argv[]);
-  virtual void Initialize(const CParameterString& Parameters);
+  virtual bool Initialize(int argc, char * argv[]);
+  virtual bool Initialize(const CParameterString& Parameters);
+  virtual bool Initialize(CParameterString& ParameterString,
+                          CParameterStringConfiguration& ParameterConfig,
+                          CConfiguration& FileConfig);
   virtual void DisplayHelpMessage(void);
   virtual void CreateConfiguration(void);
   CString DefaultConfigurationName(void);
   virtual CString ConfigurationName(void);
   virtual bool Configure(const CString& FileName);
+  virtual bool Reconfigure(void);
   int GetFileNameLength(void) const { return m_FileNameLength; }
   int SetFileNameLength(const int FileNameLength);
   int FileIndex(void) const { return m_FileIndex; }
+  virtual bool CanContinue(void);
+  virtual bool LoadState(void);
+  virtual bool SaveState(void);
   virtual CString TargetName(const int FileIndex, const CString& SourceFileName);
   virtual bool ProcessFile(const CString& SourceFileName, CString& TargetFileName);
   virtual bool PreProcess(void);
   virtual bool Run(void);
   virtual bool PostProcess(void);
-  virtual void Finalize(void);
+  virtual bool Finalize(void);
   virtual void Print(std::ostream& out) { };
  public:
   bool& AliasesEnabled(void) { return m_AliasesEnabled; }
   bool& BeVerbose(void) { return m_VerboseMode; }
   bool& BeQuiet(void) { return m_QuietMode; }
   bool& DoShowHelp(void) { return m_HelpMode; }
+  bool DebugMode(void) const { return 0!=m_DebugLevel; }
+  int& DebugLevel(void) { return m_DebugLevel; }
   CConfiguration& CFG(void) { return m_FileConfiguration; }
   CParameterStringConfiguration& PSC(void) { return m_ParameterStringConfiguration; }
   CParameterString& PS(void) { return m_ParameterString; }
@@ -72,18 +96,24 @@ class CGenericProcessingMachine
   virtual ~CGenericProcessingMachine(void);
 };
 
-const CString GPM_VAR_NAME_IN   = "-in";
-const CString GPM_VAR_NAME_OUT  = "-out";
-const CString GPM_VAR_NAME_LIST = "-list";
-const CString GPM_VAR_NAME_CFG  = "-cfg";
-const CString GPM_VAR_NAME_INDIR   = "-indir";
-const CString GPM_VAR_NAME_OUTDIR  = "-outdir";
-const CString GPM_VAR_NAME_HELP   = "--help";
-const CString GPM_VAR_NAME_VERBOSE = "--verbose";
-const CString GPM_VAR_NAME_QUIET = "--quiet";
-const CString GPM_VAR_NAME_HELP_ALIAS   = "-h";
-const CString GPM_VAR_NAME_VERBOSE_ALIAS = "-v";
-const CString GPM_VAR_NAME_QUIET_ALIAS = "-q";
+#ifndef GPM_DEFAULT_FILENAME_LENGTH
+#define GPM_DEFAULT_FILENAME_LENGTH 12
+#endif
+
+static const char* GPM_VAR_NAME_IN   = "-in";
+static const char* GPM_VAR_NAME_OUT  = "-out";
+static const char* GPM_VAR_NAME_LIST = "-list";
+static const char* GPM_VAR_NAME_CONT = "-cont";
+static const char* GPM_VAR_NAME_CFG  = "-cfg";
+static const char* GPM_VAR_NAME_INDIR   = "-indir";
+static const char* GPM_VAR_NAME_OUTDIR  = "-outdir";
+static const char* GPM_VAR_NAME_HELP   = "--help";
+static const char* GPM_VAR_NAME_VERBOSE = "--verbose";
+static const char* GPM_VAR_NAME_QUIET = "--quiet";
+static const char* GPM_VAR_NAME_DEBUG = "--debug";
+static const char* GPM_VAR_NAME_HELP_ALIAS   = "-h";
+static const char* GPM_VAR_NAME_VERBOSE_ALIAS = "-v";
+static const char* GPM_VAR_NAME_QUIET_ALIAS = "-q";
 
 #endif
 //------------------------------------------------------------------------------

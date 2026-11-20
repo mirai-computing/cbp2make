@@ -1,6 +1,6 @@
 /*
     cbp2make : Makefile generation tool for the Code::Blocks IDE
-    Copyright (C) 2010-2023 Mirai Computing (mirai.computing@gmail.com)
+    Copyright (C) 2010-2026 Mirai Computing (mirai.computing@gmail.com)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -50,6 +50,7 @@ class CProcessingMachine: public CGenericProcessingMachine
 CProcessingMachine::CProcessingMachine(void)
 {
  m_BuildManager.Clear();
+ PSC().StrictSyntax() = true;
 }
 
 CProcessingMachine::~CProcessingMachine(void)
@@ -449,7 +450,7 @@ bool CProcessingMachine::Configure(const CString& FileName)
  {
   CString config_item_str = PSC().VarNamed("--config").GetString();
   int config_item = GuessStr(config_item_str,"toolchain tool platform variable options",
-                             config_item_str,true);
+                             config_item_str,' ',true);
   if (0==config_item)
   {
    CString chain_name = PSC().VarNamed("-chain").GetString();
@@ -488,7 +489,7 @@ bool CProcessingMachine::Configure(const CString& FileName)
      {
       CString tool_type_str = PSC().VarNamed("-type").GetString();
       int tool_type_int = GuessStr(tool_type_str,"other pp as cc rc sl dl el nl count",
-                                   tool_type_str,false);
+                                   tool_type_str,' ',false);
       CBuildTool::ToolType tool_type = (CBuildTool::ToolType)tool_type_int;
       CString tool_name = PSC().VarNamed("-tool").GetString();
       CBuildTool *bt = tc->FindBuildToolByName(tool_name);
@@ -627,17 +628,17 @@ bool CProcessingMachine::Configure(const CString& FileName)
  {
   CString target_case_name = PSC().VarNamed("--target-case").GetString();
   m_BuildManager.Config().TargetNameCase() =
-   GuessStr(target_case_name,"keep lower upper",target_case_name,false);
+   GuessStr(target_case_name,"keep lower upper",target_case_name,' ',false);
  }
  {
   CString macros_case_name = PSC().VarNamed("--macros-case").GetString();
   m_BuildManager.Config().MacroVariableCase() =
-   GuessStr(macros_case_name,"keep lower upper",macros_case_name,false);
+   GuessStr(macros_case_name,"keep lower upper",macros_case_name,' ',false);
  }
  {
   CString quote_path_name = PSC().VarNamed("--quote-path").GetString();
   m_BuildManager.Config().QuotePathMode() =
-   GuessStr(quote_path_name,"auto never always",quote_path_name,false);
+   GuessStr(quote_path_name,"auto never always",quote_path_name,' ',false);
  }
  m_BuildManager.Config().KeepObjectDirectories() = PSC().VarDefined("--keep-objdir");
  m_BuildManager.Config().KeepOutputDirectories() = PSC().VarDefined("--keep-outdir");
@@ -675,7 +676,7 @@ bool CProcessingMachine::ProcessFile(const CString& SourceFileName, CString& Tar
  if (BeVerbose()) m_BuildManager.Show();
  //
  if (!BeQuiet()) std::cout<<"Generating makefile(s): "<<TargetFileName.GetString()<<": "<<std::flush;
- m_BuildManager.GenerateMakefile(TargetFileName);
+ result &= m_BuildManager.GenerateMakefile(TargetFileName);
  if (!BeQuiet()) std::cout<<"[DONE]"<<std::endl<<std::flush;
  return result;
 }
@@ -684,9 +685,28 @@ CProcessingMachine PM;
 
 int main(int argc, char* argv[])
 {
- PM.Initialize(argc,argv);
- PM.Run();
- PM.Finalize();
- return 0;
+ int exit_code = 0;
+#if defined(__EXCEPTIONS) || defined(__cpp_exceptions)
+ try
+ {
+#endif
+  if (!PM.Initialize(argc,argv))
+  {
+   exit_code = 1;
+  }
+  else if (!PM.Run())
+  {
+   exit_code = 1;
+  }
+  PM.Finalize();
+#if defined(__EXCEPTIONS) || defined(__cpp_exceptions)
+ }
+ catch (const std::exception& ex)
+ {
+  std::cerr<<"Exception: "<<ex.what()<<std::endl<<std::flush;
+  exit_code = 1;
+ }
+#endif
+ return exit_code;
 }
 //---------------------------------------------------------------------------

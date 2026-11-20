@@ -1,6 +1,6 @@
 /*
     cbp2make : Makefile generation tool for the Code::Blocks IDE
-    Copyright (C) 2010-2023 Mirai Computing (mirai.computing@gmail.com)
+    Copyright (C) 2010-2026 Mirai Computing (mirai.computing@gmail.com)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -240,6 +240,7 @@ void CCodeBlocksWorkspace::Show(const bool ShowProjects)
 bool CCodeBlocksWorkspace::GenerateMakefile
  (const CString& FileName, CCodeBlocksBuildConfig& Config)
 {
+ bool result = true;
  // generate individual makefiles for projects
  CString cwd = GetCurrentDir();
  CString workspace_path = ExtractFilePath(FileName);
@@ -273,7 +274,7 @@ bool CCodeBlocksWorkspace::GenerateMakefile
   makefile_pathname = MakeNativePath(makefile_pathname);
   //std::cout<<"cwd "<<cwd.GetCString()<<std::endl;
   //std::cout<<"gen_makefile "<<makefile_pathname.GetCString()<<std::endl;
-  m_Units[i]->m_Project.GenerateMakefile(makefile_pathname,Config);
+  result &= m_Units[i]->m_Project.GenerateMakefile(makefile_pathname,Config);
  }
  // generate workspace makefile
  int active_platforms = 0;
@@ -357,11 +358,11 @@ bool CCodeBlocksWorkspace::GenerateMakefile
   }
   // save makefile
   CStringList& text = m_Makefile.Update();
-  text.SaveToFile(makefile_name);
+  result &= text.SaveToFile(makefile_name);
   m_Makefile.Clear();
   ChangeDir(cwd);
  }
- return true;
+ return result;
 }
 
 void CCodeBlocksWorkspace::GenerateMakefileText(const CString& FileName,

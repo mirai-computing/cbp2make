@@ -1,6 +1,6 @@
 /*
     cbp2make : Makefile generation tool for the Code::Blocks IDE
-    Copyright (C) 2010-2023 Mirai Computing (mirai.computing@gmail.com)
+    Copyright (C) 2010-2026 Mirai Computing (mirai.computing@gmail.com)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,6 +24,25 @@
 #include "stlstrings.h"
 #include "stlconvert.h"
 //------------------------------------------------------------------------------
+
+const CString ALPHABET_NULL_CHAR      = char(0x00);
+const CString ALPHABET_TAB_CHAR       = char(0x09);
+const CString ALPHABET_CR_CHAR        = char(0x0d);
+const CString ALPHABET_LF_CHAR        = char(0x0a);
+const CString ALPHABET_BIN_NUMBER     = "01";
+const CString ALPHABET_OCT_NUMBER     = "01234567";
+const CString ALPHABET_NUMBER         = "0123456789";
+const CString ALPHABET_INTEGER_NUMBER = "+-0123456789";
+const CString ALPHABET_FLOAT_NUMBER   = "+-.,0123456789eE";
+const CString ALPHABET_DOUBLE_NUMBER  = "+-.,0123456789dD";
+const CString ALPHABET_REAL_NUMBER    = "+-.,0123456789eEdD";
+const CString ALPHABET_HEX_NUMBER     = "0123456789abcdefABCDEF";
+const CString ALPHABET_CTL_CHARS      = "\'\"\?\\\a\b\f\n\r\t\v\0";
+const CString ALPHABET_ESC_SEQUENCE   = "\'\"?\\abfnrtv0";
+const CString ALPHABET_SHELL_CHARS    = " !@#$%^&*(){}[];\'\"\\|<>?";
+const CString ALPHABET_LCASE_CHARS    = "abcdefghijklmnopqrstuvwxyz";
+const CString ALPHABET_UCASE_CHARS    = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
 
 std::string& CString::GetString(void)
 {
@@ -52,12 +71,35 @@ bool CString::IsEmpty(void) const
 
 CString& CString::SetLength(void)
 {
- return SetLength(strlen(GetCString()));
+ m_String.resize(strlen(GetCString()));
+ return *this;
 }
 
 CString& CString::SetLength(const int Length)
 {
  m_String.resize(Length);
+ return *this;
+}
+
+CString& CString::Reserve(const int Length)
+{
+ size_t new_size = std::max(Length,0);
+ if (new_size>m_String.capacity())
+ {
+  m_String.reserve(new_size);
+ }
+ return *this;
+}
+
+CString& CString::Truncate(void)
+{
+ m_String.shrink_to_fit();
+ return *this;
+}
+
+CString& CString::Truncate(const int Size)
+{
+ m_String.resize(Size);
  return *this;
 }
 
@@ -109,6 +151,77 @@ CString& CString::Assign(const std::string& AString)
 CString& CString::Assign(const CString& AString)
 {
  m_String = AString.GetString();
+ return *this;
+}
+
+CString& CString::Assign(const int32_t AInteger)
+{
+ std::to_string(AInteger);
+ char buffer[CString::BUFFER_SIZE];
+ sprintf(buffer,"%ld",(long int)AInteger);
+ *this = buffer;
+ return *this;
+}
+
+CString& CString::Assign(const int64_t AInteger)
+{
+ char buffer[CString::BUFFER_SIZE];
+ sprintf(buffer,"%lld",(long long int)AInteger);
+ *this = buffer;
+ return *this;
+}
+
+CString& CString::Assign(const uint32_t AInteger)
+{
+ char buffer[CString::BUFFER_SIZE];
+ sprintf(buffer,"%lu",(unsigned long int)AInteger);
+ *this = buffer;
+ return *this;
+}
+
+CString& CString::Assign(const uint64_t AInteger)
+{
+ char buffer[CString::BUFFER_SIZE];
+ sprintf(buffer,"%llu",(unsigned long long int)AInteger);
+ *this = buffer;
+ return *this;
+}
+
+CString& CString::Assign(const float AFloat, const int Precision)
+{
+ char buffer[CString::BUFFER_SIZE];
+ if (Precision>=0)
+ {
+  CString format = "%."+IntegerToString(Precision)+"e";
+  sprintf(buffer,format.GetCString(),AFloat);
+ }
+ else
+ {
+  sprintf(buffer,"%e",AFloat);
+ }
+ *this = buffer;
+ return *this;
+}
+
+CString& CString::Assign(const double AFloat, const int Precision)
+{
+ char buffer[CString::BUFFER_SIZE];
+ if (Precision>=0)
+ {
+  CString format = "%."+IntegerToString(Precision)+"le";
+  sprintf(buffer,format.GetCString(),AFloat);
+ }
+ else
+ {
+  sprintf(buffer,"%le",AFloat);
+ }
+ *this = buffer;
+ return *this;
+}
+
+CString& CString::Prepend(const CString& AString)
+{
+ m_String.insert(0,AString.m_String);
  return *this;
 }
 
@@ -209,7 +322,7 @@ CString& CString::operator =(const int AInteger)
  return *this;
 }
 
-CString& CString::operator =(const long long int AInteger)
+CString& CString::operator =(const int64_t AInteger)
 {
  char buffer[MAX_SHORTSTRING_LENGTH];
  sprintf(buffer,"%lld",AInteger);
@@ -256,7 +369,7 @@ CString& CString::operator +=(const int AInteger)
  return *this;
 }
 
-CString& CString::operator +=(const long long int AInteger)
+CString& CString::operator +=(const int64_t AInteger)
 {
  char buffer[MAX_SHORTSTRING_LENGTH];
  sprintf(buffer,"%lld",AInteger);
@@ -298,6 +411,18 @@ bool CString::operator ==(const CString& AString) const
 int CString::GetInteger(void) const
 {
  return atoi(GetCString());
+}
+
+int64_t CString::GetInt64(void) const
+{
+ if (sizeof(long int)==sizeof(int64_t)) return atol(GetCString());
+ return atoll(GetCString());
+}
+
+uint64_t CString::GetUInt64(void) const
+{
+ if (sizeof(long int)==sizeof(uint64_t)) return (uint64_t)atol(GetCString());
+ return (uint64_t)atoll(GetCString());
 }
 
 double CString::GetFloat(void) const
@@ -500,6 +625,12 @@ CStringList& CStringList::RemoveAt(const int Index)
  return *this;
 }
 
+CStringList& CStringList::Reserve(const int Count)
+{
+ while (GetCount()<Count) Insert("");
+ return *this;
+}
+
 CStringList& CStringList::RemoveEmpty(void)
 {
  for (int i = m_Strings.size()-1; i >= 0; i--)
@@ -533,13 +664,33 @@ CStringList& CStringList::Clear(void)
  return *this;
 }
 
+CStringList& CStringList::PrependAllStrings(const CString& AString)
+{
+ for (size_t j = 0; j < m_Strings.size(); j++)
+ {
+  CString *sj = (CString *)m_Strings.at(j);
+  sj->Prepend(AString);
+ }
+ return *this;
+}
+
+CStringList& CStringList::AppendAllStrings(const CString& AString)
+{
+ for (size_t j = 0; j < m_Strings.size(); j++)
+ {
+  CString *sj = (CString *)m_Strings.at(j);
+  sj->Append(AString);
+ }
+ return *this;
+}
+
 bool CStringList::AppendFromFile(const CString& FileName)
 {
  FILE* stream = fopen(FileName.GetCString(),"rb");
  CString buffer; char c,c2; int buf_pos;
  if (NULL!=stream)
  {
-  buffer.SetLength(0x100);
+  buffer.SetLength(CString::BUFFER_SIZE);
   buf_pos = 0; c = 0;
   while (!feof(stream))
   {
@@ -566,7 +717,8 @@ bool CStringList::AppendFromFile(const CString& FileName)
     }
     default:
     {
-     if (buf_pos>=buffer.GetLength()) buffer.SetLength(buffer.GetLength()+0x100);
+     if (buffer.GetLength()<CString::BUFFER_SIZE) buffer.SetLength(CString::BUFFER_SIZE);
+     if (buf_pos>=buffer.GetLength()) buffer.SetLength(buffer.GetLength()*2);
      buffer[buf_pos++] = c;
      break;
   }}}
@@ -587,18 +739,46 @@ bool CStringList::LoadFromFile(const CString& FileName)
  return AppendFromFile(FileName);
 }
 
-bool CStringList::SaveToFile(const CString& FileName)
+bool CStringList::AppendToFile(const CString& FileName, const bool WriteEOL)
+{
+ FILE* stream = fopen(FileName.GetCString(),"a+");
+ if (NULL!=stream)
+ {
+  CString buf; buf.AppendEOL();
+  for (int i = 0; i < GetCount(); i++)
+  {
+   CString& tmp = GetString(i);
+   fwrite(tmp.GetCString(),tmp.GetLength(),1,stream);
+   if (WriteEOL) fwrite(buf.GetCString(),buf.GetLength(),1,stream);
+  }
+  fclose(stream);
+  return true;
+ }
+ return false;
+}
+
+bool CStringList::WriteToFile(FILE* stream, const bool WriteEOL)
+{
+ if (NULL!=stream)
+ {
+  CString buf; buf.AppendEOL();
+  for (int i = 0; i < GetCount(); i++)
+  {
+   CString& tmp = GetString(i);
+   fwrite(tmp.GetCString(),tmp.GetLength(),1,stream);
+   if (WriteEOL) fwrite(buf.GetCString(),buf.GetLength(),1,stream);
+  }
+  return true;
+ }
+ return false;
+}
+
+bool CStringList::SaveToFile(const CString& FileName, const bool WriteEOL)
 {
  FILE* stream = fopen(FileName.GetCString(),"wb");
  if (NULL!=stream)
  {
-  CString buffer; buffer.AppendEOL();
-  for (int i = 0; i < GetCount(); i++)
-  {
-   CString& string = GetString(i);
-   fwrite(string.GetCString(),string.GetLength(),1,stream);
-   fwrite(buffer.GetCString(),buffer.GetLength(),1,stream);
-  }
+  WriteToFile(stream,WriteEOL);
   fclose(stream);
   return true;
  }
@@ -810,6 +990,30 @@ bool CStringIterator::Match(const CString& Pattern, const bool Move)
  return result;
 }
 
+void CStringIterator::Assign(const CStringIterator& Iterator)
+{
+ m_String = Iterator.m_String;
+ m_Position = Iterator.m_Position;
+}
+
+void CStringIterator::Assign(const CCharIterator* Iterator)
+{
+ if (Iterator->GetType()==CCharIterator::ir_string_iterator)
+ {
+  Assign(*(CStringIterator*)Iterator);
+ }
+}
+
+CCharIterator* CStringIterator::CreateInstance(void)
+{
+ return new CStringIterator(*this);
+}
+
+void CStringIterator::InitInstance(CStringIterator& Iterator)
+{
+ Iterator.Assign(*this);
+}
+
 //------------------------------------------------------------------------------
 
 CStringListIterator::CStringListIterator(void)
@@ -826,9 +1030,7 @@ CStringListIterator::CStringListIterator(const CStringList *AStringList)
 
 CStringListIterator::CStringListIterator(const CStringListIterator& AStringListIterator)
 {
- m_StringList = AStringListIterator.m_StringList;
- m_Line = AStringListIterator.m_Line;
- m_Position = AStringListIterator.m_Position;
+ Assign(AStringListIterator);
 }
 
 int CStringListIterator::FirstPosition(void)
@@ -851,20 +1053,24 @@ char& CStringListIterator::First(void)
 {
  if (NULL==m_StringList) return m_NullChar;
  m_Line = 0;
- m_Position = 0;
+ m_LinePos = 0;
+ m_Position = FirstPosition();
  return This();
 }
 
 char& CStringListIterator::Prev(void)
 {
  if (NULL==m_StringList) return m_NullChar;
- if (m_Position > 0) { m_Position--; return This(); }
+ if (m_LinePos > 0)
+ {
+  m_LinePos--; m_Position--; return This();
+ }
  else
  {
   if (m_Line > 0)
   {
-   m_Line--;
-   m_Position = std::max(0,m_StringList->GetString(m_Line).GetLength()-1);
+   m_Line--; m_Position--;
+   m_LinePos = std::max(0,m_StringList->GetString(m_Line).GetLength()-1);
  }}
  return This();
 }
@@ -878,13 +1084,15 @@ char& CStringListIterator::This(void)
 char& CStringListIterator::Next(void)
 {
  if (NULL==m_StringList) return m_NullChar;
- if (m_Position < (int)m_StringList->GetString(m_Line).GetLength()) { m_Position++; return This(); }
+ if (m_LinePos < m_StringList->GetString(m_Line).GetLength())
+ {
+  m_LinePos++; m_Position++; return This();
+ }
  else
  {
-  if (m_Line < (m_StringList->GetCount()-1))
+ if (m_Line < (m_StringList->GetCount()-1))
   {
-   m_Line++;
-   m_Position = 0;
+   m_Line++; m_LinePos = 0; m_Position++;
  }}
  return This();
 }
@@ -893,7 +1101,8 @@ char& CStringListIterator::Last(void)
 {
  if (NULL==m_StringList) return m_NullChar;
  m_Line = m_StringList->GetCount()-1;
- m_Position = m_StringList->GetString(m_Line).GetLength();
+ m_LinePos = m_StringList->GetString(m_Line).GetLength();
+ m_Position = LastPosition();
  return This();
 }
 
@@ -913,6 +1122,27 @@ bool CStringListIterator::Match(const CString& Pattern, const bool Move)
   m_Position = position;
  }
  return result;
+}
+
+void CStringListIterator::Assign(const CStringListIterator& Iterator)
+{
+ m_StringList = Iterator.m_StringList;
+ m_Line = Iterator.m_Line;
+ m_LinePos = Iterator.m_LinePos;
+ m_Position = Iterator.m_Position;
+}
+
+void CStringListIterator::Assign(const CCharIterator* Iterator)
+{
+ if (Iterator->GetType()==CCharIterator::it_stringlist_iterator)
+ {
+  Assign(*(CStringListIterator*)Iterator);
+ }
+}
+
+void CStringListIterator::InitInstance(CStringListIterator& Iterator)
+{
+ Iterator.Assign(*this);
 }
 
 //------------------------------------------------------------------------------
@@ -1095,6 +1325,99 @@ void CCharHistogram::Print(std::ostream& out)
 
 //------------------------------------------------------------------------------
 
+static bool F_HEX_LUT = false;
+static uint8_t HEX_LUT[0x100];
+
+void InitHexLUT()
+{
+ if (!F_HEX_LUT)
+ {
+  for (int i=0; i<0x100; i++) HEX_LUT[i] = 0;
+  for (int i=0; i<0x10; i++) HEX_LUT[(uint8_t)HEX_CHARS_LCASE[i]] = i;
+  for (int i=0; i<0x10; i++) HEX_LUT[(uint8_t)HEX_CHARS_UCASE[i]] = i;
+  F_HEX_LUT = true;
+ }
+}
+
+void HexToBuf(const CString& AString, uint8_t* Buffer, const int Size, const bool BigEndian)
+{
+ if (BigEndian)
+ {
+  for (int i=0,j=0; i<Size; i++)
+  {
+   uint8_t h = HEX_LUT[(uint8_t)AString.GetChar(j++)];
+   uint8_t l = HEX_LUT[(uint8_t)AString.GetChar(j++)];
+   Buffer[i] = ((h<<4)|l);
+  }
+ }
+ else
+ {
+  for (int i=0,j=Size*2-1; i<Size; i++)
+  {
+   uint8_t l = HEX_LUT[(uint8_t)AString.GetChar(j--)];
+   uint8_t h = HEX_LUT[(uint8_t)AString.GetChar(j--)];
+   Buffer[i] = ((h<<4)|l);
+  }
+ }
+}
+
+int HexStrToInt(const CString& AString, const int Size, const bool BigEndian)
+{
+ InitHexLUT();
+ int result = 0;
+ uint8_t* buf = (uint8_t*)&result;
+ int n = std::min((size_t)Size,sizeof(result));
+ HexToBuf(AString,buf,n,BigEndian);
+ return result;
+}
+
+float HexStrToFloat(const CString& AString, const int Size, const bool BigEndian)
+{
+ InitHexLUT();
+ float result = 0;
+ uint8_t* buf = (uint8_t*)&result;
+ int n = std::min((size_t)Size,sizeof(result));
+ HexToBuf(AString,buf,n,BigEndian);
+ return result;
+}
+
+double HexStrToDouble(const CString& AString, const int Size, const bool BigEndian)
+{
+ InitHexLUT();
+ double result = 0;
+ uint8_t* buf = (uint8_t*)&result;
+ int n = std::min((size_t)Size,sizeof(result));
+ HexToBuf(AString,buf,n,BigEndian);
+ return result;
+}
+
+CString CharArrayToString(const char* CharArray, const int Size)
+{
+ CString result; result.SetLength(Size);
+ for (int i=0; i<Size; i++) result[i] = CharArray[i];
+ result.SetLength(); // trim 0's
+ return result;
+}
+
+void StringToCharArray(const CString& AString, char* CharArray, const int Size)
+{
+ int n = std::min(AString.GetLength(),std::max(Size,0));
+ for (int i=0; i<n; i++) CharArray[i] = AString[i];
+ for (int i=n; i<Size; i++) CharArray[i] = 0;
+}
+
+CString SignatureChars(const uint32_t Signature)
+{
+ CString result; uint32_t s = Signature;
+ for (size_t i = 0; i < sizeof(s); i++)
+ {
+  result+=char(s&0xff);
+  if (result[i]<' ') result[i] = ' ';
+  s>>=8;
+ }
+ return result;
+}
+
 CString StringOfChars(const char AChar, const int Count)
 {
  CString result;
@@ -1110,23 +1433,36 @@ CString FillStr(const CString& Prefix, const char AChar,
  return result;
 }
 
+int EnumDigits(const int Number)
+{
+ //return 1+ceil(log10(abs(Number)));
+ int result = 1, threshold = 10;
+ while (threshold<=Number)
+ {
+  threshold *= 10;
+  result++;
+ }
+ return result;
+}
+
+CString EnumCounterStr(const int Counter, const int Length)
+{
+ CString result, lead_zero, counter = IntegerToString(Counter);
+ int length = counter.GetLength();
+ if (Length>length)
+ {
+  lead_zero.SetLength(Length-length); lead_zero.Fill('0');
+ }
+ result = lead_zero + counter;
+ return result;
+}
+
 CString EnumStr(const CString& Prefix, const int Counter, const CString& Suffix, const unsigned int Length)
 {
  CString result, lead_zero, counter = IntegerToString(Counter);
  unsigned int length = Prefix.GetLength()+counter.GetLength()+Suffix.GetLength();
  if (Length>length) { lead_zero.SetLength(Length-length); lead_zero.Fill('0'); }
  result = Prefix + lead_zero + counter + Suffix;
- return result;
-}
-
-CString SignStr(const int Signature)
-{
- CString result; int s = Signature;
- for (size_t i = 0; i < sizeof(s); i++)
- {
-  result+=char(s&0xff);
-  s>>=8;
- }
  return result;
 }
 
@@ -1172,6 +1508,55 @@ void SplitStr(const CString& AString, const int Position, CString& LString, CStr
  RString = RightStr(AString,Position);
 }
 
+void SplitStr(const CString& AString, const char AChar, CString& LString, CString& RString)
+{
+ int pos = FirstCharPos(AString,AChar);
+ LString = LeftStr(AString,pos-1);
+ RString = RightStr(AString,pos+1);
+}
+
+void SplitStr(const CString& AString, const int Length, CStringList& SubStrings)
+{
+ if (Length>0)
+ {
+  if (AString.GetLength()>Length)
+  {
+   for (int i=0; i<AString.GetLength(); i+=Length)
+   {
+    SubStrings.Insert(SubStr(AString,i,i+Length-1));
+   }
+  }
+  else
+  {
+   SubStrings.Insert(AString);
+  }
+ }
+}
+
+bool StrSplitNumberUnit(const CString& AString, CString& NumberStr, CString& UnitStr)
+{
+ NumberStr.Clear(); UnitStr.Clear();
+ if (AString.IsEmpty()) return false;
+ CCharset NUM_CHARS(ALPHABET_FLOAT_NUMBER);
+ int pos = 0;
+ for (int i=0; i<AString.GetLength(); i++)
+ {
+  if (' '==AString[i]) continue;
+  if (!NUM_CHARS.Isset(AString[i])) { pos = i; break; }
+ }
+ if (pos)
+ {
+  CString s1,s2; SplitStr(AString,pos,s1,s2);
+  NumberStr = TrimStr2(s1);
+  UnitStr = TrimStr2(s2);
+ }
+ else
+ {
+  NumberStr = TrimStr2(AString);
+ }
+ return true;
+}
+
 CString JoinStr(const CString& AString, const CString& BString, const char Separator)
 {
  CString result = AString;
@@ -1198,6 +1583,12 @@ CString FilterStr(const CString& AString, const CCharset& ValidChars, const CCha
  }
  result.SetLength(length);
  return result;
+}
+
+CString FilterStr(const CString& AString, const CString& ValidChars, const CString& InvalidChars, const bool ValidateUndefined)
+{
+ CCharset vc(ValidChars); CCharset ic(InvalidChars);
+ return FilterStr(AString,vc,ic,ValidateUndefined);
 }
 
 int CountChars(const CString& AString, const char AChar)
@@ -1236,13 +1627,13 @@ int LastCharPos(const CString& AString, const char AChar)
  else return INVALID_INDEX;
 }
 
-CString TrimStr(const CString& AString)
+CString TrimStr(const CString& AString, const char AChar)
 {
  int first_pos = 0, last_pos = AString.GetLength()-1;
  for (int i = first_pos; i <= last_pos; i++)
- { if (' '==AString.GetChar(i)) first_pos++; else break; }
+ { if (AChar==AString.GetChar(i)) first_pos++; else break; }
  for (int i = last_pos; i > first_pos; i--)
- { if (' '==AString.GetChar(i)) last_pos--; else break; }
+ { if (AChar==AString.GetChar(i)) last_pos--; else break; }
  return SubStr(AString,first_pos,last_pos);
 }
 
@@ -1261,12 +1652,36 @@ CString TrimStr2(const CString& AString)
  return SubStr(AString,first_pos,last_pos);
 }
 
-CString LeadStr(const CString& AString, const unsigned int RLength)
+CString LeadStr(const CString& AString, const int RLength)
 {
  CString result;
- result.SetLength(std::max(0,(int)RLength-(int)AString.GetLength()));
+ result.SetLength(std::max(0,RLength-AString.GetLength()));
  result.Fill(' ');
  result.Append(AString);
+ return result;
+}
+
+CString PadStr(const CString& AString, const int Length, const CString::align_t Align)
+{
+ if (Length<=AString.GetLength()) return AString;
+ CString result; result.Reserve(Length);
+ int padding = Length - AString.GetLength();
+ int lpad = padding, rpad = 0;
+ switch (Align)
+ {
+  default: case CString::al_none: case CString::al_right: break;
+  case CString::al_left: { rpad = padding; lpad = 0; break; }
+  case CString::al_center: { rpad = padding/2; lpad = padding-rpad; break; }
+  case CString::al_dot:
+  {
+   int pos =  std::max(FirstCharPos(AString,'.'),FirstCharPos(AString,','));
+   if (pos>0) { lpad = padding-pos; rpad = padding-lpad; }
+   break;
+  }
+ }
+ if (lpad) result.Append(StringOfChars(' ',lpad));
+ result.Append(AString);
+ if (rpad) result.Append(StringOfChars(' ',rpad));
  return result;
 }
 
@@ -1295,10 +1710,54 @@ void ParseStr(const CString& AString, const CString& Delimiters, CStringList& Su
 
 void ParseStr(const CString& AString, const char Delimiter, CStringList& SubStrings)
 {
- CString _Delimiters;
- _Delimiters.SetLength(CountChars(AString,Delimiter));
- _Delimiters.Fill(Delimiter);
- ParseStr(AString,_Delimiters,SubStrings);
+ CString delimiters;
+ delimiters.SetLength(CountChars(AString,Delimiter));
+ delimiters.Fill(Delimiter);
+ ParseStr(AString,delimiters,SubStrings);
+}
+
+void ParseStrWithQuotes(const CString& AString, const CString& Delimiters, CStringList& SubStrings)
+{
+ if (Delimiters.GetLength()==0) { SubStrings.Insert(AString); return; }
+ if (AString.GetLength()==0) { return; }
+ int str_pos = 0, delim_pos = 0;
+ CString sub_str; bool f_quoted = false; char quote_char;
+ while (str_pos<AString.GetLength())
+ {
+  //if (AString.GetChar(str_pos)=='"') f_quoted = !f_quoted;
+  if (f_quoted)
+  {
+   if (AString.GetChar(str_pos)==quote_char) f_quoted = false;
+  }
+  else
+  {
+   const char c = AString.GetChar(str_pos);
+   if (c=='"' || c=='\'')
+   {
+    f_quoted = true; quote_char = c;
+   }
+  }
+  if (AString.GetChar(str_pos)==Delimiters.GetChar(delim_pos) && !f_quoted)
+  {
+   SubStrings.Insert(sub_str);
+   sub_str.SetLength(0);
+   if (++delim_pos>=Delimiters.GetLength())
+   {
+    sub_str = SubStr(AString,++str_pos,AString.GetLength()-1);
+    break;
+  }}
+  else sub_str.Append(AString.GetChar(str_pos));
+  str_pos++;
+ }
+ SubStrings.Insert(sub_str);
+}
+
+void ParseStrWithQuotes(const CString& AString, const char Delimiter, CStringList& SubStrings)
+{
+ CString delimiters;
+ delimiters.SetLength(CountChars(AString,Delimiter));
+ delimiters.Fill(Delimiter);
+ ParseStrWithQuotes(AString,delimiters,SubStrings);
 }
 
 CString CollectStr(const CStringList& SubStrings, const CString& Delimiters)
@@ -1355,10 +1814,10 @@ CString CheckLastChar(const CString& AString, const char AChar)
  return result;
 }
 
-int FindStr(const CString& AString, const CString& BString)
+int FindStr(const CString& AString, const CString& BString, const int Position)
 {
  int result = INVALID_INDEX;
- for (int i = 0, n = ((int)AString.GetLength() - (int)BString.GetLength()); i <= n; i++)
+ for (int i = Position, n = ((int)AString.GetLength() - (int)BString.GetLength()); i <= n; i++)
  {
   bool flag = true;
   for (int j = 0, k = i, m = BString.GetLength(); j < m; j++, k++)
@@ -1395,6 +1854,26 @@ CString FindReplaceStr(const CString& AString,
  return result;
 }
 
+CString FindReplaceStr2(const CString& AString,
+ const CString& SearchString, const CString& ReplaceString)
+{
+ CString result = AString;
+ int last_pos = 0;
+ do
+ {
+  int pos = FindStr(result,SearchString,last_pos);
+  if (INVALID_INDEX==pos) break;
+  // if current position is same as last one, this means that ReplaceString contains SearchString causing infinite loop
+  // to avoid this we fast forward past ReplaceString and try again
+  if (pos==last_pos) pos = FindStr(result,SearchString,last_pos+ReplaceString.GetLength());
+  if (INVALID_INDEX==pos) break;
+  last_pos = pos;
+  result = LeftStr(result,pos-1) + ReplaceString + RightStr(result,pos + SearchString.GetLength());
+ }
+ while (true);
+ return result;
+}
+
 int ParseMemSizeStr(const CString& AString, int& UnitSize, char& UnitChar)
 {
  CCharset invalid_chars;
@@ -1419,12 +1898,12 @@ int ParseMemSizeStr(const CString& AString)
  return result;
 }
 
-long long int ParseMemSizeStr64(const CString& AString, long long int& UnitSize, char& UnitChar)
+uint64_t ParseMemSizeStr64(const CString& AString, uint64_t& UnitSize, char& UnitChar)
 {
- const long long int kb = 0x00000000400LL;
- const long long int mb = 0x00000100000LL;
- const long long int gb = 0x00040000000LL;
- const long long int tb = 0x10000000000LL;
+ const uint64_t kb = 0x00000000400LL;
+ const uint64_t mb = 0x00000100000LL;
+ const uint64_t gb = 0x00040000000LL;
+ const uint64_t tb = 0x10000000000LL;
  CCharset invalid_chars;
  CCharset valid_number_chars(ALPHABET_NUMBER);
  CCharset valid_suffix_chars("bkmgtBKMGT");
@@ -1440,10 +1919,10 @@ long long int ParseMemSizeStr64(const CString& AString, long long int& UnitSize,
  return result;
 }
 
-long long int ParseMemSizeStr64(const CString& AString)
+uint64_t ParseMemSizeStr64(const CString& AString)
 {
- long long int unit_size; char unit_char;
- long long int result = ParseMemSizeStr64(AString,unit_size,unit_char);
+ uint64_t unit_size; char unit_char;
+ uint64_t result = ParseMemSizeStr64(AString,unit_size,unit_char);
  result *= unit_size;
  return result;
 }
@@ -1479,11 +1958,11 @@ int GuessStr(const CString& AString, const CStringList& Variants, CString& Guess
  return result;
 }
 
-int GuessStr(const CString& AString, const CString& Variants, CString& Guessed, const bool TryFuzzy)
+int GuessStr(const CString& AString, const CString& Variants, CString& Guessed, const char Delimiter, const bool TryFuzzy)
 {
- CStringList _Variants;
- ParseStr(Variants,' ',_Variants);
- return GuessStr(AString,_Variants,Guessed,TryFuzzy);
+ CStringList varlist;
+ ParseStr(Variants,Delimiter,varlist);
+ return GuessStr(AString,varlist,Guessed,TryFuzzy);
 }
 
 CString VariantStr(const int Index, const CString& Variants, const char Delimiter)
@@ -1494,12 +1973,12 @@ CString VariantStr(const int Index, const CString& Variants, const char Delimite
  return result;
 }
 
-CString MemSizeStr(const long long int Value, long long int& UnitSize, CString& UnitSuffix)
+CString MemSizeStr(const uint64_t Value, uint64_t& UnitSize, CString& UnitSuffix, const CString Spacer)
 {
- const long long int kb = 0x00000000400LL;
- const long long int mb = 0x00000100000LL;
- const long long int gb = 0x00040000000LL;
- const long long int tb = 0x10000000000LL;
+ const uint64_t kb = 0x00000000400LL;
+ const uint64_t mb = 0x00000100000LL;
+ const uint64_t gb = 0x00040000000LL;
+ const uint64_t tb = 0x10000000000LL;
  const CString format = "%lg";
  if (Value < kb)
  {
@@ -1529,10 +2008,10 @@ CString MemSizeStr(const long long int Value, long long int& UnitSize, CString& 
  return "";
 }
 
-CString MemSizeStr(const long long int Value)
+CString MemSizeStr(const uint64_t Value, const CString Spacer)
 {
- long long int unit_size; CString unit_suffix;
- return MemSizeStr(Value,unit_size,unit_suffix).Append(" ").Append(unit_suffix);
+ uint64_t unit_size; CString unit_suffix;
+ return MemSizeStr(Value,unit_size,unit_suffix).Append(Spacer).Append(unit_suffix);
 }
 
 CString SI_UnitStr(const double Value, double& UnitSize, CString& UnitPrefix, CString& UnitSymbol)
@@ -1574,7 +2053,11 @@ CString SI_UnitStr(const double Value)
 
 bool IsQuoted(const CString& AString)
 {
- return ((AString.GetLength()>=2)&&(AString.GetFirstChar()=='\"')&&(AString.GetLastChar()=='\"'));
+ int len = AString.GetLength();
+ char fc = AString.GetFirstChar();
+ char lc = AString.GetLastChar();
+ bool result = ((len>=2)&&(((fc=='\"')&&(lc=='\"'))||((fc=='\'')&&(lc=='\''))));
+ return result;
 }
 
 CString QuoteStr(const CString& AString)
@@ -1685,14 +2168,159 @@ CString UnshieldChars(const CString& AString, const CString& Chars)
  return result;
 }
 
+CString ReplaceQuotedChars(const CString& AString, const char QuoteChar, const char FindChar, const char ReplaceChar)
+{
+ CString result = AString;
+ bool replace = false;
+ for (int i = 0, n = AString.GetLength(); i < n; i++)
+ {
+  char c = result[i];
+  if (QuoteChar==c)
+  {
+   replace = !replace;
+   continue;
+  }
+  if ((FindChar==c) && replace)
+  {
+   result[i] = ReplaceChar;
+  }
+ }
+ return result;
+}
+
+CString ReverseStr(const CString& AString)
+{
+ CString result(AString);
+ for (int i = 0, n = AString.GetLength(); i < n; i++)
+ {
+  result[i] = AString[n-i-1];
+ }
+ return result;
+}
+
 bool StrBeginsWith(const CString& AString, const CString& StartChars, bool IgnoreSpaces)
 {
  if (IgnoreSpaces)
  {
   CString s = TrimStr2(AString);
-  if (0==FindStr(s,StartChars)) return true;
+  return (LeftStr(s,StartChars.GetLength()-1)==StartChars);
  }
- return (0==FindStr(AString,StartChars));
+ return (LeftStr(AString,StartChars.GetLength()-1)==StartChars);
+}
+
+bool StrContainsAny(const CString& AString, const CString& Chars)
+{
+ if (AString.IsEmpty()) return false;
+ for (int i = 0, n = AString.GetLength(); i < n; i++)
+ {
+  for (int j = 0, m = Chars.GetLength(); j < m; j++)
+  {
+   if (AString[i]==Chars[j]) return true;
+  }
+ }
+ return false;
+}
+
+bool StrContainsAll(const CString& AString, const CString& Chars)
+{
+ if (AString.IsEmpty()) return false;
+ bool f_char[Chars.GetLength()]; int n_char = 0;
+ for (int j = 0, m = Chars.GetLength(); j < m; j++) f_char[j] = false;
+ //
+ for (int i = 0, n = AString.GetLength(); i < n; i++)
+ {
+  for (int j = 0, m = Chars.GetLength(); j < m; j++)
+  {
+   if (AString[i]==Chars[j])
+   {
+    if (!f_char[j]) { f_char[j] = true; n_char++; break; }
+   }
+  }
+  //
+  if (Chars.GetLength()==n_char) return true;
+ }
+ return false;
+}
+
+bool StrContainsOnly(const CString& AString, const CString& Chars)
+{
+ if (AString.IsEmpty()) return false;
+ for (int i = 0, n = AString.GetLength(); i < n; i++)
+ {
+  bool f_char = true;
+  for (int j = 0, m = Chars.GetLength(); j < m; j++)
+  {
+   if (AString[i]==Chars[j]) { f_char = false; break; }
+  }
+  if (f_char) return false;
+ }
+ return true;
+}
+
+int StrGetNumBase(const CString& AString, CString *UnprefixedString)
+{
+ CString s = TrimStr(AString,' ');
+ int base = 0;
+ // tell base from prefix
+ if (StrBeginsWith(s,"0x",false)||StrBeginsWith(s,"0X",false))
+ {
+  s = RightStr(s,2); base = 16;
+ }
+ else if (StrBeginsWith(s,"0b",false)||StrBeginsWith(s,"0B",false))
+ {
+  s = RightStr(s,2); base = 2;
+ }
+ else if (StrBeginsWith(s,"b",false)||StrBeginsWith(s,"B",false))
+ {
+  s = RightStr(AString,1); base = 2;
+ }
+ else if (StrBeginsWith(s,"0o",false)||StrBeginsWith(s,"0O",false))
+ {
+  s = RightStr(AString,2); base = 8;
+ }
+ else if (StrBeginsWith(s,"o",false)||StrBeginsWith(s,"o",false))
+ {
+  s = RightStr(AString,1); base = 8;
+ }
+ /*
+ else if (StrBeginsWith(s,"o",false)||StrBeginsWith(s,"O",false))
+ {
+  s = RightStr(AString,1); base = 8;
+ }
+ else if (StrBeginsWith(s,"0",false))
+ {
+  s = AString; base = 8;
+ }
+ */
+ /*
+ else
+ {
+  s = AString; base = 10;
+ }
+ */
+ //std::cout<<"auto base = "<<base<<std::endl;
+ // tell base from content
+ if (0==base)
+ {
+  if (StrContainsOnly(s,ALPHABET_INTEGER_NUMBER)) base = 10;
+  else if (StrContainsOnly(s,ALPHABET_BIN_NUMBER)) base = 2;
+  else if (StrContainsOnly(s,ALPHABET_OCT_NUMBER)) base = 8;
+  else if (StrContainsOnly(s,ALPHABET_HEX_NUMBER)) base = 16;
+ }
+ // validate base
+ /*
+ switch (base)
+ {
+  default: break;
+  case 2: { if (!StrContainsOnly(s,ALPHABET_BIN_NUMBER)) base = 0; break; }
+  case 8: { if (!StrContainsOnly(s,ALPHABET_OCT_NUMBER)) base = 0; break; }
+  case 10: { if (!StrContainsOnly(s,ALPHABET_INTEGER_NUMBER)) base = 0; break; }
+  case 16: { if (!StrContainsOnly(s,ALPHABET_HEX_NUMBER)) base = 0; break; }
+ }
+ */
+ //
+ if (0!=UnprefixedString) UnprefixedString->Assign(s);
+ return base;
 }
 
 //------------------------------------------------------------------------------

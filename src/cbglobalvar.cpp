@@ -1,6 +1,6 @@
 /*
     cbp2make : Makefile generation tool for the Code::Blocks IDE
-    Copyright (C) 2010-2023 Mirai Computing (mirai.computing@gmail.com)
+    Copyright (C) 2010-2026 Mirai Computing (mirai.computing@gmail.com)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -174,7 +174,7 @@ void CGlobalVariable::Add(const CString& Name, const CString& Value)
 {
  CString name = Name;
  int field = GuessStr(Name,"base include lib obj cflags lflags",
-                      name,false);
+                      name,' ',false);
  switch (field)
  {
   case 0: { m_Base = Value; break; }

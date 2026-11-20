@@ -1,6 +1,6 @@
 /*
     cbp2make : Makefile generation tool for the Code::Blocks IDE
-    Copyright (C) 2010-2023 Mirai Computing (mirai.computing@gmail.com)
+    Copyright (C) 2010-2026 Mirai Computing (mirai.computing@gmail.com)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,14 +20,41 @@
 #include "stlvariables.h"
 //------------------------------------------------------------------------------
 
-int CVariable::GetType(void) const
+CString CVariable::TypeName(const CVariable::VariableType VarType)
 {
- return VARIABLE_TYPE_NONE;
+ switch (VarType)
+ {
+  default: case CVariable::varNone: return "none";
+  case CVariable::varInteger: return "integer";
+  case CVariable::varFloat: return "float";
+  case CVariable::varBoolean: return "boolean";
+  case CVariable::varFlag: return "flag";
+  case CVariable::varString: return "string";
+  case CVariable::varChar: return "char";
+ }
+ return "";
+}
+
+CVariable::VariableType CVariable::GetType(const CString& TypeName)
+{
+ for (int i=CVariable::varNone; i<=CVariable::varChar; i++)
+ {
+  if (CVariable::TypeName((CVariable::VariableType)i)==TypeName)
+  {
+   return (CVariable::VariableType)i;
+  }
+ }
+ return CVariable::varNone;
+}
+
+CVariable::VariableType CVariable::GetType(void) const
+{
+ return CVariable::varNone;
 }
 
 CString CVariable::GetTypeName(void) const
 {
- return "";
+ return "none";
 }
 
 CString& CVariable::GetName(void)
@@ -95,6 +122,12 @@ void CVariable::Print(std::ostream& out)
  out<<m_Name.GetCString()<<"="<<GetString().GetCString();
 }
 
+CVariable *CVariable::CreateInstance() const
+{
+ CVariable *variable = new CVariable(m_Name);
+ return variable;
+}
+
 CVariable::CVariable(void)
 {
  m_Name = "CVariable";
@@ -112,9 +145,9 @@ CVariable::~CVariable(void)
 
 //------------------------------------------------------------------------------
 
-int CIntegerVariable::GetType(void) const
+CVariable::VariableType CIntegerVariable::GetType(void) const
 {
- return VARIABLE_TYPE_INTEGER;
+ return CVariable::varInteger;
 }
 
 CString CIntegerVariable::GetTypeName(void) const
@@ -172,6 +205,13 @@ void CIntegerVariable::SetChar(const char Value)
  m_Value = CharToInt(Value);
 }
 
+CVariable *CIntegerVariable::CreateInstance() const
+{
+ CIntegerVariable *variable = new CIntegerVariable(m_Name);
+ variable->SetInteger(m_Value);
+ return variable;
+}
+
 int CIntegerVariable::operator=(const CIntegerVariable& Variable)
 {
  return Variable.GetInteger();
@@ -215,9 +255,9 @@ CIntegerVariable::CIntegerVariable(const CString& Name,const int Value)
 
 //------------------------------------------------------------------------------
 
-int CFloatVariable::GetType(void) const
+CVariable::VariableType CFloatVariable::GetType(void) const
 {
- return VARIABLE_TYPE_FLOAT;
+ return CVariable::varFloat;
 }
 
 CString CFloatVariable::GetTypeName(void) const
@@ -275,6 +315,13 @@ void CFloatVariable::SetChar(const char Value)
  m_Value = CharToFloat(Value);
 }
 
+CVariable *CFloatVariable::CreateInstance() const
+{
+ CFloatVariable *variable = new CFloatVariable(m_Name);
+ variable->SetFloat(m_Value);
+ return variable;
+}
+
 double CFloatVariable::operator=(const CFloatVariable& Variable)
 {
  return Variable.GetFloat();
@@ -318,9 +365,9 @@ CFloatVariable::CFloatVariable(const CString& Name,const double Value)
 
 //------------------------------------------------------------------------------
 
-int CBooleanVariable::GetType(void) const
+CVariable::VariableType CBooleanVariable::GetType(void) const
 {
- return VARIABLE_TYPE_BOOLEAN;
+ return CVariable::varBoolean;
 }
 
 CString CBooleanVariable::GetTypeName(void) const
@@ -378,6 +425,13 @@ void CBooleanVariable::SetChar(const char Value)
  m_Value = CharToBool(Value);
 }
 
+CVariable *CBooleanVariable::CreateInstance() const
+{
+ CBooleanVariable *variable = new CBooleanVariable(m_Name);
+ variable->SetBoolean(m_Value);
+ return variable;
+}
+
 bool CBooleanVariable::operator=(const CBooleanVariable& Variable)
 {
  return Variable.GetBoolean();
@@ -421,9 +475,9 @@ CBooleanVariable::CBooleanVariable(const CString& Name,const bool Value)
 
 //------------------------------------------------------------------------------
 
-int CFlagVariable::GetType(void) const
+CVariable::VariableType CFlagVariable::GetType(void) const
 {
- return VARIABLE_TYPE_FLAG;
+ return CVariable::varFlag;
 }
 
 CString CFlagVariable::GetTypeName(void) const
@@ -431,11 +485,18 @@ CString CFlagVariable::GetTypeName(void) const
  return "flag";
 }
 
+CVariable *CFlagVariable::CreateInstance() const
+{
+ CFlagVariable *variable = new CFlagVariable(m_Name);
+ variable->SetBoolean(m_Value);
+ return variable;
+}
+
 //------------------------------------------------------------------------------
 
-int CStringVariable::GetType(void) const
+CVariable::VariableType CStringVariable::GetType(void) const
 {
- return VARIABLE_TYPE_STRING;
+ return CVariable::varString;
 }
 
 CString CStringVariable::GetTypeName(void) const
@@ -493,6 +554,13 @@ void CStringVariable::SetChar(const char Value)
  m_Value = CharToString(Value);
 }
 
+CVariable *CStringVariable::CreateInstance() const
+{
+ CStringVariable *variable = new CStringVariable(m_Name);
+ variable->SetString(m_Value);
+ return variable;
+}
+
 CString CStringVariable::operator=(const CStringVariable& Variable)
 {
  return Variable.GetString();
@@ -536,9 +604,9 @@ CStringVariable::CStringVariable(const CString& Name,const CString Value)
 
 //------------------------------------------------------------------------------
 
-int CCharVariable::GetType(void) const
+CVariable::VariableType CCharVariable::GetType(void) const
 {
- return VARIABLE_TYPE_CHAR;
+ return CVariable::varChar;
 }
 
 CString CCharVariable::GetTypeName(void) const
@@ -594,6 +662,13 @@ char CCharVariable::GetChar(void) const
 void CCharVariable::SetChar(const char Value)
 {
  m_Value=Value;
+}
+
+CVariable *CCharVariable::CreateInstance() const
+{
+ CCharVariable *variable = new CCharVariable(m_Name);
+ variable->SetChar(m_Value);
+ return variable;
 }
 
 char CCharVariable::operator=(const CCharVariable& Variable)

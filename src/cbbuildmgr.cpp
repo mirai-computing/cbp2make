@@ -1,6 +1,6 @@
 /*
     cbp2make : Makefile generation tool for the Code::Blocks IDE
-    Copyright (C) 2010-2023 Mirai Computing (mirai.computing@gmail.com)
+    Copyright (C) 2010-2026 Mirai Computing (mirai.computing@gmail.com)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -84,16 +84,18 @@ void CCodeBlocksBuildManager::Show(void)
  }
 }
 
-void CCodeBlocksBuildManager::GenerateMakefile(const CString& FileName)
+bool CCodeBlocksBuildManager::GenerateMakefile(const CString& FileName)
 {
+ bool result = false;
  if (m_ProjectLoaded)
  {
-  m_Project.GenerateMakefile(FileName,m_Config);
+  result = m_Project.GenerateMakefile(FileName,m_Config);
  }
  if (m_WorkspaceLoaded)
  {
-  m_Workspace.GenerateMakefile(FileName,m_Config);
+  result = m_Workspace.GenerateMakefile(FileName,m_Config);
  }
+ return result;
 }
 
 //------------------------------------------------------------------------------

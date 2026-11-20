@@ -1,6 +1,6 @@
 /*
     cbp2make : Makefile generation tool for the Code::Blocks IDE
-    Copyright (C) 2010-2023 Mirai Computing (mirai.computing@gmail.com)
+    Copyright (C) 2010-2026 Mirai Computing (mirai.computing@gmail.com)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -156,10 +156,10 @@ inline CString IntegerToString(const int Value)
  return result;
 }
 
-inline CString Int64ToString(const long long int Value)
+inline CString Int64ToString(const int64_t Value)
 {
  CString result;
- result = (long long int)Value;
+ result = (int64_t)Value;
  return result;
 }
 

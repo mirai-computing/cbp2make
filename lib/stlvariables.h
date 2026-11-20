@@ -1,6 +1,6 @@
 /*
     cbp2make : Makefile generation tool for the Code::Blocks IDE
-    Copyright (C) 2010-2023 Mirai Computing (mirai.computing@gmail.com)
+    Copyright (C) 2010-2026 Mirai Computing (mirai.computing@gmail.com)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,21 +23,25 @@
 #include "stlconvert.h"
 //------------------------------------------------------------------------------
 
-const int VARIABLE_TYPE_NONE    = 0;
-const int VARIABLE_TYPE_INTEGER = 1;
-const int VARIABLE_TYPE_FLOAT   = 2;
-const int VARIABLE_TYPE_BOOLEAN = 3;
-const int VARIABLE_TYPE_FLAG    = 4;
-const int VARIABLE_TYPE_STRING  = 5;
-const int VARIABLE_TYPE_CHAR    = 6;
-const int VARIABLE_TYPE_COUNT   = 7;
-
 class CVariable
 {
  protected:
   CString m_Name;
  public:
-  virtual int GetType(void) const;
+  enum VariableType
+  {
+   varNone,
+   varInteger,
+   varFloat,
+   varBoolean,
+   varFlag,
+   varString,
+   varChar
+  };
+  static const char *TypeName(void) { return "void"; }
+  static CString TypeName(const CVariable::VariableType VarType);
+  static CVariable::VariableType GetType(const CString& TypeName);
+  virtual CVariable::VariableType GetType(void) const;
   virtual CString GetTypeName(void) const;
   CString& GetName(void);
   void SetName(const CString& Name);
@@ -51,6 +55,7 @@ class CVariable
   virtual void SetString(const CString& Value);
   virtual char GetChar(void) const;
   virtual void SetChar(const char Value);
+  virtual CVariable *CreateInstance() const;
   void Print(std::ostream& out);
  public:
   CVariable(void);
@@ -63,7 +68,8 @@ class CIntegerVariable: public CVariable
  protected:
   int m_Value;
  public:
-  virtual int GetType(void) const;
+  static const char *TypeName(void) { return "integer"; }
+  virtual CVariable::VariableType GetType(void) const;
   virtual CString GetTypeName(void) const;
   virtual double GetFloat(void) const;
   virtual void SetFloat(const double Value);
@@ -75,6 +81,7 @@ class CIntegerVariable: public CVariable
   virtual void SetString(const CString& Value);
   virtual char GetChar(void) const;
   virtual void SetChar(const char Value);
+  virtual CVariable *CreateInstance() const;
   int operator=(const CIntegerVariable& Variable);
   CIntegerVariable& operator =(const double Value);
   CIntegerVariable& operator =(const int Value);
@@ -91,7 +98,7 @@ class CFloatVariable: public CVariable
  protected:
   double m_Value;
  public:
-  virtual int GetType(void) const;
+  virtual CVariable::VariableType GetType(void) const;
   virtual CString GetTypeName(void) const;
   virtual double GetFloat(void) const;
   virtual void SetFloat(const double Value);
@@ -103,6 +110,7 @@ class CFloatVariable: public CVariable
   virtual void SetString(const CString& Value);
   virtual char GetChar(void) const;
   virtual void SetChar(const char Value);
+  virtual CVariable *CreateInstance() const;
   double operator=(const CFloatVariable& Variable);
   CFloatVariable& operator =(const double Value);
   CFloatVariable& operator =(const int Value);
@@ -119,7 +127,7 @@ class CBooleanVariable: public CVariable
  protected:
   bool m_Value;
  public:
-  virtual int GetType(void) const;
+  virtual CVariable::VariableType GetType(void) const;
   virtual CString GetTypeName(void) const;
   virtual double GetFloat(void) const;
   virtual void SetFloat(const double Value);
@@ -131,6 +139,7 @@ class CBooleanVariable: public CVariable
   virtual void SetString(const CString& Value);
   virtual char GetChar(void) const;
   virtual void SetChar(const char Value);
+  virtual CVariable *CreateInstance() const;
   bool operator=(const CBooleanVariable& Variable);
   CBooleanVariable& operator =(const double Value);
   CBooleanVariable& operator =(const int Value);
@@ -145,8 +154,9 @@ class CBooleanVariable: public CVariable
 class CFlagVariable: public CBooleanVariable
 {
  public:
-  virtual int GetType(void) const;
+  virtual CVariable::VariableType GetType(void) const;
   virtual CString GetTypeName(void) const;
+  virtual CVariable *CreateInstance() const;
  public:
   CFlagVariable(const CString& Name,const bool Value=false): CBooleanVariable(Name, Value) {};
   virtual ~CFlagVariable(void) {};
@@ -157,7 +167,7 @@ class CStringVariable: public CVariable
  protected:
   CString m_Value;
  public:
-  virtual int GetType(void) const;
+  virtual CVariable::VariableType GetType(void) const;
   virtual CString GetTypeName(void) const;
   virtual double GetFloat(void) const;
   virtual void SetFloat(const double Value);
@@ -169,6 +179,7 @@ class CStringVariable: public CVariable
   virtual void SetString(const CString& Value);
   virtual char GetChar(void) const;
   virtual void SetChar(const char Value);
+  virtual CVariable *CreateInstance() const;
   CString operator=(const CStringVariable& Variable);
   CStringVariable& operator =(const double Value);
   CStringVariable& operator =(const int Value);
@@ -185,7 +196,7 @@ class CCharVariable: public CVariable
  protected:
   char m_Value;
  public:
-  virtual int GetType(void) const;
+  virtual CVariable::VariableType GetType(void) const;
   virtual CString GetTypeName(void) const;
   virtual double GetFloat(void) const;
   virtual void SetFloat(const double Value);
@@ -197,6 +208,7 @@ class CCharVariable: public CVariable
   virtual void SetString(const CString& Value);
   virtual char GetChar(void) const;
   virtual void SetChar(const char Value);
+  virtual CVariable *CreateInstance() const;
   char operator=(const CCharVariable& Variable);
   CCharVariable& operator =(const double Value);
   CCharVariable& operator =(const int Value);

@@ -1,4 +1,8 @@
 KEY [ ]pending [+]new/added [-]removed [*]changed/in-progress [!]fixed
+--- revision #169 : 20nov2026 ---
+[*] Updated core library modules from upstream.
+[+] Return non-zero exit code in case of a failure (suggested by aafemt, https://github.com/aafemt)
+[+] Strict parsing of command line options (suggested by aafemt, https://github.com/aafemt)
 --- revision #160 : 13dec2023 ---
 [*] Fixed application of project-target link options order for LIBS macro and missing spacing.
 --- revision #158 : 13dec2023 ---

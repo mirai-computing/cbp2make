@@ -1,6 +1,6 @@
 /*
     cbp2make : Makefile generation tool for the Code::Blocks IDE
-    Copyright (C) 2010-2023 Mirai Computing (mirai.computing@gmail.com)
+    Copyright (C) 2010-2026 Mirai Computing (mirai.computing@gmail.com)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -674,6 +674,7 @@ CString CCodeBlocksProject::ToolChainSuffix(const int ToolChainIndex, CCodeBlock
 bool CCodeBlocksProject::GenerateMakefile
  (const CString& FileName, CCodeBlocksBuildConfig& Config)
 {
+ bool result = true;
  m_Dependencies.Clear();
  // setup decorated target names
  //DecorateTargetNames();
@@ -1429,7 +1430,7 @@ bool CCodeBlocksProject::GenerateMakefile
   }
   // save makefile
   CStringList& text = m_Makefile.Update();
-  text.SaveToFile(makefile_name);
+  result &= text.SaveToFile(makefile_name);
   m_Makefile.Clear();
   ChangeDir(cwd);
  }
@@ -1444,7 +1445,7 @@ bool CCodeBlocksProject::GenerateMakefile
  {
   m_Dependencies.Show();
  }
- return true;
+ return result;
 }
 
 //------------------------------------------------------------------------------

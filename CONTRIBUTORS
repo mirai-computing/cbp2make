@@ -1,3 +1,5 @@
 Dimitry Sibiryakov (aafemt)	https://github.com/aafemt/
 - Resource compiler options
 - WinGUI option & console builds
+- Exit codes for normal/abnormal termination
+- Strict command line parsing

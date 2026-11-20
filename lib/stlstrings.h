@@ -1,6 +1,6 @@
 /*
     cbp2make : Makefile generation tool for the Code::Blocks IDE
-    Copyright (C) 2010-2023 Mirai Computing (mirai.computing@gmail.com)
+    Copyright (C) 2010-2026 Mirai Computing (mirai.computing@gmail.com)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,7 +31,10 @@
 
 class CString
 {
+ public:
   enum eol_t { eol_cr, eol_lf, eol_crlf };
+  enum align_t { al_none, al_left, al_center, al_right, al_dot };
+  static const int BUFFER_SIZE = MAX_SHORTSTRING_LENGTH;
  protected:
   std::string m_String;
   eol_t m_eol_type;
@@ -43,6 +46,9 @@ class CString
   bool IsEmpty(void) const;
   CString& SetLength(void);
   CString& SetLength(const int Length);
+  CString& Reserve(const int Length);
+  CString& Truncate(void);
+  CString& Truncate(const int Length);
   CString& Clear(void);
   char GetChar(const int Index) const;
   char GetFirstChar(void) const;
@@ -52,6 +58,13 @@ class CString
   CString& Assign(const char *AString);
   CString& Assign(const std::string& AString);
   CString& Assign(const CString& AString);
+  CString& Assign(const int32_t AInteger);
+  CString& Assign(const int64_t AInteger);
+  CString& Assign(const uint32_t AInteger);
+  CString& Assign(const uint64_t AInteger);
+  CString& Assign(const float AFloat, const int Precision = -1);
+  CString& Assign(const double AFloat, const int Precision = -1);
+  CString& Prepend(const CString& AString);
   CString& Append(const char AChar);
   CString& Append(const char *AString);
   CString& Append(const std::string& AString);
@@ -69,20 +82,22 @@ class CString
   CString& operator =(const std::string& AString);
   CString& operator =(const CString& AString);
   CString& operator =(const int AInteger);
-  CString& operator =(const long long int AInteger);
+  CString& operator =(const int64_t AInteger);
   CString& operator =(const float AFloat);
   CString& operator =(const double AFloat);
   CString& operator +=(const char AChar);
   CString& operator +=(const char *CString);
   CString& operator +=(const CString& AString);
   CString& operator +=(const int AInteger);
-  CString& operator +=(const long long int AInteger);
+  CString& operator +=(const int64_t AInteger);
   CString& operator +=(const float AFloat);
   CString& operator +=(const double AFloat);
   bool operator ==(const char *AString) const;
   bool operator ==(const std::string& AString) const;
   bool operator ==(const CString& AString) const;
   int GetInteger(void) const;
+  int64_t GetInt64(void) const;
+  uint64_t GetUInt64(void) const;
   double GetFloat(void) const;
   void Fill(const char AChar);
   void Print(std::ostream& out);
@@ -117,12 +132,17 @@ class CStringList
   CStringList& InsertAt(const int Index, const CString *AString);
   CStringList& InsertAt(const int Index, const CString& AString);
   CStringList& RemoveAt(const int Index);
+  CStringList& Reserve(const int Count);
   CStringList& RemoveEmpty(void);
   CStringList& RemoveDuplicates(void);
   CStringList& Clear(void);
+  CStringList& PrependAllStrings(const CString& AString);
+  CStringList& AppendAllStrings(const CString& AString);
   bool AppendFromFile(const CString& FileName);
   bool LoadFromFile(const CString& FileName);
-  bool SaveToFile(const CString& FileName);
+  bool AppendToFile(const CString& FileName, const bool WriteEOL = true);
+  bool WriteToFile(FILE* stream, const bool WriteEOL = true);
+  bool SaveToFile(const CString& FileName, const bool WriteEOL = true);
   void Print(std::ostream& out);
   CStringList& operator =(const CString& AString);
   CStringList& operator =(const CStringList& AStringList);
@@ -165,6 +185,10 @@ class CCharIterator
  protected:
   char m_NullChar;
  public:
+  // STL version has no general class RTTI, using local substutution.
+  enum IteratorType { it_char_iterator, ir_string_iterator, it_stringlist_iterator };
+  virtual IteratorType GetType() const { return it_char_iterator; }
+  //
   virtual int FirstPosition(void) { return 0; }
   virtual int ThisPosition(void) { return 0; }
   virtual int LastPosition(void) { return 0; }
@@ -176,10 +200,14 @@ class CCharIterator
   virtual char& Last(void) { return m_NullChar; }
   virtual void Reset(void) {};
   virtual bool Match(const CString& Pattern, const bool Move = false);
-  virtual void Print(std::ostream& out) {};
+  virtual void Assign(const CCharIterator& Iterator) { (void)Iterator; }
+  virtual void Assign(const CCharIterator* Iterator) { (void)Iterator; }
+  virtual CCharIterator* CreateInstance(void) { return new CCharIterator(); }
+  virtual void InitInstance(CCharIterator& Iterator) { (void)Iterator; }
+  void Print(std::ostream& out) { (void)out; }
  public:
   CCharIterator(void) { m_NullChar = 0; };
-  CCharIterator(const CCharIterator& ACharIterator) { m_NullChar = 0; };
+  CCharIterator(const CCharIterator& ACharIterator) { (void)ACharIterator; m_NullChar = 0; };
   virtual ~CCharIterator(void) {};
 };
 
@@ -189,6 +217,8 @@ class CStringIterator: public CCharIterator
   CString *m_String;
   int m_Position;
  public:
+  virtual IteratorType GetType() const { return it_stringlist_iterator; }
+  //
   virtual int FirstPosition(void);
   virtual int ThisPosition(void);
   virtual int LastPosition(void);
@@ -200,6 +230,10 @@ class CStringIterator: public CCharIterator
   virtual char& Last(void);
   virtual void Reset(void);
   virtual bool Match(const CString& Pattern, const bool Move = false);
+  virtual void Assign(const CStringIterator& Iterator);
+  virtual void Assign(const CCharIterator* Iterator);
+  virtual CCharIterator* CreateInstance(void);
+  virtual void InitInstance(CStringIterator& Iterator);
  public:
   CStringIterator(void);
   CStringIterator(const CString *AString);
@@ -212,8 +246,11 @@ class CStringListIterator: public CCharIterator
  protected:
   CStringList *m_StringList;
   int m_Line;
+  int m_LinePos;
   int m_Position;
  public:
+  virtual IteratorType GetType() const { return it_stringlist_iterator; }
+  //
   virtual int FirstPosition(void);
   virtual int ThisPosition(void);
   virtual int LastPosition(void);
@@ -225,6 +262,10 @@ class CStringListIterator: public CCharIterator
   virtual char& Last(void);
   virtual void Reset(void);
   virtual bool Match(const CString& Pattern, const bool Move = false);
+  virtual void Assign(const CStringListIterator& Iterator);
+  virtual void Assign(const CCharIterator* Iterator);
+  virtual CCharIterator* CreateInstance(void) { return new CStringListIterator(*this); };
+  virtual void InitInstance(CStringListIterator& Iterator);
  public:
   CStringListIterator(void);
   CStringListIterator(const CStringList *AStringList);
@@ -268,19 +309,23 @@ class CCharHistogram
   ~CCharHistogram(void);
 };
 
-static const CString ALPHABET_NULL_CHAR      = char(0x00);
-static const CString ALPHABET_TAB_CHAR       = char(0x09);
-static const CString ALPHABET_CR_CHAR        = char(0x0d);
-static const CString ALPHABET_LF_CHAR        = char(0x0a);
-static const CString ALPHABET_NUMBER         = "0123456789";
-static const CString ALPHABET_INTEGER_NUMBER = "+-0123456789";
-static const CString ALPHABET_FLOAT_NUMBER   = "+-.,0123456789eE";
-static const CString ALPHABET_DOUBLE_NUMBER  = "+-.,0123456789dD";
-static const CString ALPHABET_REAL_NUMBER    = "+-.,0123456789eEdD";
-static const CString ALPHABET_HEX_NUMBER     = "0123456789abcdefABCDEF";
-static const CString ALPHABET_CTL_CHARS      = "\'\"\?\\\a\b\f\n\r\t\v\0";
-static const CString ALPHABET_ESC_SEQUENCE   = "\'\"?\\abfnrtv0";
-static const CString ALPHABET_SHELL_CHARS    = " !@#$%^&*(){}[];\'\"\\|<>?";
+extern const CString ALPHABET_NULL_CHAR;
+extern const CString ALPHABET_TAB_CHAR;
+extern const CString ALPHABET_CR_CHAR;
+extern const CString ALPHABET_LF_CHAR;
+extern const CString ALPHABET_BIN_NUMBER;
+extern const CString ALPHABET_OCT_NUMBER;
+extern const CString ALPHABET_NUMBER;
+extern const CString ALPHABET_INTEGER_NUMBER;
+extern const CString ALPHABET_FLOAT_NUMBER;
+extern const CString ALPHABET_DOUBLE_NUMBER;
+extern const CString ALPHABET_REAL_NUMBER;
+extern const CString ALPHABET_HEX_NUMBER;
+extern const CString ALPHABET_CTL_CHARS;
+extern const CString ALPHABET_ESC_SEQUENCE;
+extern const CString ALPHABET_SHELL_CHARS;
+extern const CString ALPHABET_LCASE_CHARS;
+extern const CString ALPHABET_UCASE_CHARS;
 
 static const char HEX_CHARS_UCASE[17] = "0123456789ABCDEF";
 static const char HEX_CHARS_LCASE[17] = "0123456789abcdef";
@@ -317,50 +362,33 @@ inline CString operator +(const CString& AString, const char *BCString)
 
 inline CString operator +(const char *AString, const CString& BString)
 { CString result(AString); result+=BString; return result; }
-/*
-inline CString UpperCase(const CString& AString)
-{
- CString result(AString); strupr(result.GetCString()); return result;
- //CString result(AString); std::strupr(result.GetCString()); return result;
-}
-
-inline CString LowerCase(const CString& AString)
-{
- CString result(AString); std::strlwr(result.GetCString()); return result;
- //CString result(AString); std::strlwr(result.GetCString()); return result;
-}
-*/
-
-// this might solve compatibility issues // "islower(c) ? toupper(c) : c" //
 
 inline CString UpperCase(const CString& AString)
 {
  CString result; result.SetLength(AString.GetLength());
- for (int i = 0, n = AString.GetLength(); i < n; i++)
+ for (int i = AString.GetLength() - 1; i >= 0; i--)
  {
-  char c = AString[i];
-  result[i] = islower(c) ? toupper(c) : c;
- }
+  result[i] = toupper(AString[i]);
+ };
  return result;
 }
 
 inline CString LowerCase(const CString& AString)
 {
  CString result; result.SetLength(AString.GetLength());
- for (int i = 0, n = AString.GetLength(); i < n; i++)
+ for (int i = AString.GetLength() - 1; i >= 0; i--)
  {
-  char c = AString[i];
-  result[i] = isupper(c) ? tolower(c) : c;
- }
+  result[i] = tolower(AString[i]);
+ };
  return result;
 }
 
-inline char hexChar(const unsigned char Value)
+inline char hexChar(const uint8_t Value)
 {
  return HEX_CHARS_LCASE[Value&0xF];
 }
 
-inline char HexChar(const unsigned char Value)
+inline char HexChar(const uint8_t Value)
 {
  return HEX_CHARS_UCASE[Value&0xF];
 }
@@ -389,61 +417,61 @@ inline CString Hex(const unsigned int AInteger, const unsigned int Length=8)
  return result;
 }
 
-inline CString hex8(const unsigned char AInteger)
+inline CString hex8(const uint8_t AInteger)
 {
- return hex(AInteger,2*sizeof(unsigned char));
+ return hex(AInteger,2*sizeof(uint8_t));
 }
 
-inline CString Hex8(const unsigned char AInteger)
+inline CString Hex8(const uint8_t AInteger)
 {
- return Hex(AInteger,2*sizeof(unsigned char));
+ return Hex(AInteger,2*sizeof(uint8_t));
 }
 
-inline CString hex16(const unsigned short int AInteger)
+inline CString hex16(const uint16_t AInteger)
 {
- return hex(AInteger,2*sizeof(unsigned short int));
+ return hex(AInteger,2*sizeof(uint16_t));
 }
 
-inline CString Hex16(const unsigned short int AInteger)
+inline CString Hex16(const uint16_t AInteger)
 {
- return Hex(AInteger,2*sizeof(unsigned short int));
+ return Hex(AInteger,2*sizeof(uint16_t));
 }
 
-inline CString hex32(const unsigned int AInteger)
+inline CString hex32(const uint32_t AInteger)
 {
- return hex(AInteger,2*sizeof(unsigned int));
+ return hex(AInteger,2*sizeof(uint32_t));
 }
 
-inline CString Hex32(const unsigned int AInteger)
+inline CString Hex32(const uint32_t AInteger)
 {
- return Hex(AInteger,2*sizeof(unsigned int));
+ return Hex(AInteger,2*sizeof(uint32_t));
 }
 
-inline CString hex64(const long long int AInteger, const unsigned int Length=16)
+inline CString hex64(const uint64_t AInteger, const unsigned int Length=16)
 {
  CString result; result.SetLength(Length);
- long long int value = AInteger;
+ uint64_t value = AInteger;
  for (unsigned int i = 0, j = Length; i < Length; i++)
  {
-  result[--j] = HEX_CHARS_LCASE[(unsigned int)value & 0xF];
+  result[--j] = HEX_CHARS_LCASE[value & 0xF];
   value >>= 4;
  }
  return result;
 }
 
-inline CString Hex64(const long long int AInteger, const unsigned int Length=16)
+inline CString Hex64(const uint64_t AInteger, const unsigned int Length=16)
 {
  CString result; result.SetLength(Length);
- long long int value = AInteger;
+ uint64_t value = AInteger;
  for (unsigned int i = 0, j = Length; i < Length; i++)
  {
-  result[--j] = HEX_CHARS_UCASE[(unsigned int)value & 0xF];
+  result[--j] = HEX_CHARS_UCASE[value & 0xF];
   value >>= 4;
  }
  return result;
 }
 
-inline CString hex(const unsigned char *Buffer, const unsigned int Length=0)
+inline CString hex(const uint8_t *Buffer, const unsigned int Length=0)
 {
  unsigned int length = Length*2;
  CString result; result.SetLength(length);
@@ -455,7 +483,7 @@ inline CString hex(const unsigned char *Buffer, const unsigned int Length=0)
  return result;
 }
 
-inline CString Hex(const unsigned char *Buffer, const unsigned int Length=0)
+inline CString Hex(const uint8_t *Buffer, const unsigned int Length=0)
 {
  unsigned int length = Length*2;
  CString result; result.SetLength(length);
@@ -467,54 +495,88 @@ inline CString Hex(const unsigned char *Buffer, const unsigned int Length=0)
  return result;
 }
 
+inline CString hexPtr(const void* Pointer)
+{
+ return hex((const uint8_t*)Pointer,sizeof(Pointer));
+}
+
+inline CString HexPtr(const void* Pointer)
+{
+ return Hex((const uint8_t*)Pointer,sizeof(Pointer));
+}
+
+inline CString BinStr(const uint8_t* Buffer, const uint32_t Length=0)
+{
+ uint32_t length = Length*8;
+ CString result; result.SetLength(length);
+ for (uint32_t i = 0, j = length; i < Length; i++)
+ {
+  for (int k=7; k>=0; k--)
+  {
+   result[--j] = HEX_CHARS_UCASE[(Buffer[i]>>k)&1];
+  }
+ }
+ return result;
+}
+
+int HexStrToInt(const CString& AString, const int Size = sizeof(int), const bool BigEndian = false);
+float HexStrToFloat(const CString& AString, const int Size, const bool BigEndian = false);
+double HexStrToDouble(const CString& AString, const int Size, const bool BigEndian = false);
+
+const char *SelectStr(const bool Selector, const char *TrueString, const char *FalseString);
+const CString& SelectStr(const bool Selector, const CString& TrueString, const CString& FalseString);
+CString CharArrayToString(const char* CharArray, const int Size);
+void StringToCharArray(const CString& AString, char* CharArray, const int Size);
+CString SignatureChars(const uint32_t Signature);
 CString StringOfChars(const char AChar, const int Count);
 CString FillStr(const CString& Prefix, const char AChar, const CString& Suffix, const int Length);
-CString EnumStr(const CString& Prefix, const int Counter,
-                const CString& Suffix, const unsigned int Length);
-CString SignStr(const int Signature);
+int EnumDigits(const int Number);
+CString EnumCounterStr(const int Counter, const int Length);
+CString EnumStr(const CString& Prefix, const int Counter, const CString& Suffix, const unsigned int Length);
 CString SubStr(const CString& AString, const int FirstPos, const int LastPos);
 CString ShiftStr(const CString& AString, const int Shift);
 void SplitStr(const CString& AString, const int Position, CString& LString, CString& RString);
+void SplitStr(const CString& AString, const char AChar, CString& LString, CString& RString);
+void SplitStr(const CString& AString, const int Length, CStringList& SubStrings);
+bool StrSplitNumberUnit(const CString& AString, CString& NumberStr, CString& UnitStr);
 CString JoinStr(const CString& AString, const CString& BString, const char Separator);
 CString LeftStr(const CString& AString, const int Position);
 CString RightStr(const CString& AString, const int Position);
-CString FilterStr(const CString& AString, const CCharset& ValidChars,
-                  const CCharset& InvalidChars, const bool ValidateUndefined);
+CString FilterStr(const CString& AString, const CCharset& ValidChars, const CCharset& InvalidChars, const bool ValidateUndefined);
+CString FilterStr(const CString& AString, const CString& ValidChars, const CString& InvalidChars, const bool ValidateUndefined);
 int CountChars(const CString& AString, const char AChar);
 int NextCharPos(const CString& AString, const char AChar, const int Position);
 int PrevCharPos(const CString& AString, const char AChar, const int Position);
 int FirstCharPos(const CString& AString, const char AChar);
 int LastCharPos(const CString& AString, const char AChar);
-CString TrimStr(const CString& AString);
+CString TrimStr(const CString& AString, const char AChar = ' ');
 bool IsTabOrSpace(const char AChar);
 CString TrimStr2(const CString& AString); // trims tabs and spaces from both ends
-CString LeadStr(const CString& AString, const unsigned int RLength);
+CString LeadStr(const CString& AString, const int RLength);
+CString PadStr(const CString& AString, const int Length, const CString::align_t Align);
 void ParseStr(const CString& AString, const CString& Delimiters, CStringList& SubStrings);
 void ParseStr(const CString& AString, const char Delimiter, CStringList& SubStrings);
+void ParseStrWithQuotes(const CString& AString, const CString& Delimiters, CStringList& SubStrings);
+void ParseStrWithQuotes(const CString& AString, const char Delimiter, CStringList& SubStrings);
 CString CollectStr(const CStringList& SubStrings, const CString& Delimiters);
 CString StripDupChars(const CString& AString, const char AChar);
 CString StripDupChars(const CString& AString);
 CString CheckFirstChar(const CString& AString, const char AChar);
 CString CheckLastChar(const CString& AString, const char AChar);
-int FindStr(const CString& AString, const CString& BString);
-CString FindReplaceChar(const CString& AString, const char SearchChar,
-                        const char ReplaceChar);
-CString FindReplaceStr(const CString& AString, const CString& SearchString,
-                       const CString& ReplaceString);
+int FindStr(const CString& AString, const CString& BString, const int Position = 0);
+CString FindReplaceChar(const CString& AString, const char SearchChar, const char ReplaceChar);
+CString FindReplaceStr(const CString& AString, const CString& SearchString, const CString& ReplaceString);
+CString FindReplaceStr2(const CString& AString, const CString& SearchString, const CString& ReplaceString);
 int ParseMemSizeStr(const CString& AString, int& UnitSize, char& UnitChar);
 int ParseMemSizeStr(const CString& AString);
-long long int ParseMemSizeStr64(const CString& AString,
- long long int& UnitSize, char& UnitChar);
-long long int ParseMemSizeStr64(const CString& AString);
-int GuessStr(const CString& AString, const CStringList& Variants,
-             CString& Guessed, const bool TryFuzzy = false);
-int GuessStr(const CString& AString, const CString& Variants, CString& Guessed,
-             const bool TryFuzzy = false);
+uint64_t ParseMemSizeStr64(const CString& AString, uint64_t& UnitSize, char& UnitChar);
+uint64_t ParseMemSizeStr64(const CString& AString);
+int GuessStr(const CString& AString, const CStringList& Variants, CString& Guessed, const bool TryFuzzy = false);
+int GuessStr(const CString& AString, const CString& Variants, CString& Guessed, const char Delimiter = ' ', const bool TryFuzzy = false);
 CString VariantStr(const int Index, const CString& Variants, const char Delimiter = ' ');
-CString MemSizeStr(const long long int Value, long long int& UnitSize, CString& UnitSuffix);
-CString MemSizeStr(const long long int Value);
-CString SI_UnitStr(const double Value, double& UnitSize,
-                   CString& UnitPrefix, CString& UnitSymbol);
+CString MemSizeStr(const uint64_t Value, uint64_t& UnitSize, CString& UnitSuffix, const CString Spacer = "");
+CString MemSizeStr(const uint64_t Value, const CString Spacer = "");
+CString SI_UnitStr(const double Value, double& UnitSize, CString& UnitPrefix, CString& UnitSymbol);
 CString SI_UnitStr(const double Value);
 bool IsQuoted(const CString& AString);
 CString QuoteStr(const CString& AString);
@@ -523,7 +585,13 @@ CString ShieldSpaces(const CString& AString);
 CString UnshieldSpaces(const CString& AString);
 CString ShieldChars(const CString& AString, const CString& Chars);
 CString UnshieldChars(const CString& AString, const CString& Chars);
+CString ReplaceQuotedChars(const CString& AString, const char QuoteChar, const char FindChar, const char ReplaceChar);
+CString ReverseStr(const CString& AString);
 bool StrBeginsWith(const CString& AString, const CString& StartChars, bool IgnoreSpaces);
+bool StrContainsAny(const CString& AString, const CString& Chars);
+bool StrContainsAll(const CString& AString, const CString& Chars);
+bool StrContainsOnly(const CString& AString, const CString& Chars);
+int StrGetNumBase(const CString& AString, CString *UnprefixedString = 0);
 
 //---------------------------------------------------------------------------
 #endif
